@@ -183,32 +183,19 @@ mod tests {
         [[a, 0.0, 0.0], [0.0, b, 0.0], [0.0, 0.0, c]]
     }
 
-    /// `R · diag · Rᵀ` for a rotation of 0.6 rad about the axis (1, 2, 2)/3.
+    /// `R · diag · Rᵀ` for a rotation of 0.6 rad about the axis (1, 2, 2)/3, with `R` from
+    /// Rodrigues' formula `R = c·I + s·[u]× + (1 − c)·u·uᵀ`.
     fn rotated(principal: [[f64; 3]; 3]) -> [[f64; 3]; 3] {
-        let (sin, cos) = 0.6_f64.sin_cos();
-        let axis = [1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0];
-        let skew = [
-            [0.0, -axis[2], axis[1]],
-            [axis[2], 0.0, -axis[0]],
-            [-axis[1], axis[0], 0.0],
+        let (s, c) = 0.6_f64.sin_cos();
+        let (ux, uy, uz) = (1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0);
+        let t = 1.0 - c;
+        let rot = [
+            [c + t * ux * ux, t * ux * uy - s * uz, t * ux * uz + s * uy],
+            [t * uy * ux + s * uz, c + t * uy * uy, t * uy * uz - s * ux],
+            [t * uz * ux - s * uy, t * uz * uy + s * ux, c + t * uz * uz],
         ];
-        let mut rot = [[0.0; 3]; 3];
-        let mut out = [[0.0; 3]; 3];
-        for row in 0..3 {
-            for col in 0..3 {
-                let eye = if row == col { 1.0 } else { 0.0 };
-                rot[row][col] =
-                    cos * eye + sin * skew[row][col] + (1.0 - cos) * axis[row] * axis[col];
-            }
-        }
-        for row in 0..3 {
-            for col in 0..3 {
-                out[row][col] = (0..3)
-                    .map(|k| rot[row][k] * principal[k][k] * rot[col][k])
-                    .sum();
-            }
-        }
-        out
+        let d = [principal[0][0], principal[1][1], principal[2][2]];
+        rot.map(|row_i| rot.map(|row_j| (0..3).map(|k| row_i[k] * d[k] * row_j[k]).sum()))
     }
 
     #[test]

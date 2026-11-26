@@ -4,5 +4,8 @@ allow-expect-in-tests = true
 allow-panic-in-tests = true
 allow-indexing-slicing-in-tests = true
 
-# Keep functions small and single-purpose (pedantic `too_many_lines`).
-too-many-lines-threshold = 60
+# Power of Ten rule 4 and the strict-code-standards hard cap: at most 50 lines per function.
+too-many-lines-threshold = 50
+
+# Power of Ten rule 1: at most 3 levels of nesting inside a function body.
+excessive-nesting-threshold = 4

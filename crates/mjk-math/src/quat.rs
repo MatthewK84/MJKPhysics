@@ -151,7 +151,12 @@ impl UnitQuat {
     }
 
     /// Wraps a quaternion that is unit by construction (up to rounding), such as `Exp(θ)`.
-    pub(crate) const fn from_unit(q: Quat) -> Self {
+    pub(crate) fn from_unit(q: Quat) -> Self {
+        debug_assert!(
+            (q.norm() - 1.0).abs() < 1e-12,
+            "from_unit needs a unit quaternion; norm is {}",
+            q.norm()
+        );
         Self(q)
     }
 

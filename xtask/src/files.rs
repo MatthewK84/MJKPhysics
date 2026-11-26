@@ -22,16 +22,15 @@ pub fn repo_root() -> PathBuf {
 pub fn read_tree(root: &Path, dir: &str, extension: &str) -> io::Result<Vec<(String, String)>> {
     let mut pending = vec![root.join(dir)];
     let mut found = Vec::new();
+    // bound: every directory is visited once; symlinks are never followed, so the walk ends.
     while let Some(current) = pending.pop() {
         for entry in fs::read_dir(&current)? {
-            let path = entry?.path();
-            if path.is_dir() {
-                if !is_skipped(&path) {
-                    pending.push(path);
-                }
-                continue;
-            }
-            if path.extension().is_some_and(|ext| ext == extension) {
+            let entry = entry?;
+            let kind = entry.file_type()?;
+            let path = entry.path();
+            if kind.is_dir() && !is_skipped(&path) {
+                pending.push(path);
+            } else if kind.is_file() && path.extension().is_some_and(|ext| ext == extension) {
                 found.push((relative(root, &path), fs::read_to_string(&path)?));
             }
         }

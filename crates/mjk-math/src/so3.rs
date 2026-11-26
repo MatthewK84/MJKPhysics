@@ -5,6 +5,8 @@
 //! right, in the local frame (CONV-10). Transcendental functions go through `libm` so results
 //! are bit-identical on every platform.
 
+use std::f64::consts::TAU;
+
 use libm::{atan2, cos, sin};
 
 use crate::frame::Frame;
@@ -134,6 +136,11 @@ impl UnitQuat {
 /// Right Jacobian of SO(3), Eq. (SO3-4). Valid for `‖θ‖ < 2π`.
 #[must_use]
 pub fn right_jacobian<F: Frame>(theta: Vec3<F>) -> Mat3<F> {
+    debug_assert!(
+        theta.norm() < TAU,
+        "J_r is defined for |θ| < 2π; |θ| = {}",
+        theta.norm()
+    );
     let (a, b) = jacobian_coefficients(theta.norm());
     let skew = Mat3::skew(theta);
     Mat3::identity() - skew * a + skew * skew * b
@@ -142,6 +149,11 @@ pub fn right_jacobian<F: Frame>(theta: Vec3<F>) -> Mat3<F> {
 /// Inverse of the right Jacobian, Eq. (SO3-5). Valid for `‖θ‖ < 2π`.
 #[must_use]
 pub fn right_jacobian_inverse<F: Frame>(theta: Vec3<F>) -> Mat3<F> {
+    debug_assert!(
+        theta.norm() < TAU,
+        "J_r⁻¹ is defined for |θ| < 2π; |θ| = {}",
+        theta.norm()
+    );
     let c = inverse_jacobian_coefficient(theta.norm());
     let skew = Mat3::skew(theta);
     Mat3::identity() + skew * 0.5 + skew * skew * c
@@ -190,6 +202,7 @@ impl<To: Frame, From: Frame> Rotation<To, From> {
     /// Eq. (SO3-9). `t = 0` gives `self`, `t = 1` gives `other`.
     #[must_use]
     pub fn slerp(self, other: Self, t: f64) -> Self {
+        debug_assert!(t.is_finite(), "slerp needs a finite t; got {t}");
         self.plus(other.minus(self) * t)
     }
 
@@ -238,6 +251,11 @@ fn shepperd(m: [[f64; 3]; 3]) -> Quat {
             .fold((0, f64::NEG_INFINITY), |best, (index, v)| {
                 if v > best.1 { (index, v) } else { best }
             });
+    // The four candidates sum to 4, so the largest is at least 1 for a rotation matrix.
+    debug_assert!(
+        value >= 0.99,
+        "Shepperd's largest candidate is {value}, not a rotation"
+    );
     let s = value.sqrt();
     let d = 2.0 * s;
     match largest {

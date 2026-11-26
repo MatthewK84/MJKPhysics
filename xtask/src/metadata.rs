@@ -38,6 +38,15 @@ impl fmt::Display for MetadataError {
 ///
 /// Returns [`MetadataError`] if cargo cannot be run, fails, or prints unexpected JSON.
 pub fn workspace_packages() -> Result<Vec<Package>, MetadataError> {
+    parse_packages(&workspace_metadata()?)
+}
+
+/// Runs `cargo metadata --no-deps` on this workspace and returns the raw JSON.
+///
+/// # Errors
+///
+/// Returns [`MetadataError`] if cargo cannot be run, fails, or prints invalid JSON.
+pub fn workspace_metadata() -> Result<Value, MetadataError> {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("Cargo.toml");
@@ -57,8 +66,67 @@ pub fn workspace_packages() -> Result<Vec<Package>, MetadataError> {
         let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
         return Err(MetadataError::Cargo(stderr));
     }
-    let json: Value = serde_json::from_slice(&output.stdout).map_err(MetadataError::Json)?;
-    parse_packages(&json)
+    serde_json::from_slice(&output.stdout).map_err(MetadataError::Json)
+}
+
+/// How to select a target with `cargo rustc`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Selector {
+    /// The package's library (`--lib`).
+    Lib,
+    /// A named binary (`--bin NAME`).
+    Bin(String),
+}
+
+/// A compilable library or binary target of a workspace package.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Target {
+    /// Package name, such as `mjk-math`.
+    pub package: String,
+    /// Crate name as it appears in symbols, such as `mjk_math`.
+    pub crate_name: String,
+    /// How to build it.
+    pub selector: Selector,
+}
+
+/// Lists library and binary targets of every workspace package.
+///
+/// # Errors
+///
+/// Returns [`MetadataError::Shape`] when a required field is missing or malformed.
+pub fn parse_targets(json: &Value) -> Result<Vec<Target>, MetadataError> {
+    let packages = json
+        .get("packages")
+        .and_then(Value::as_array)
+        .ok_or(MetadataError::Shape("missing `packages` array"))?;
+    let mut targets = Vec::new();
+    for package in packages {
+        let name = string_field(package, "name")?;
+        let entries = package
+            .get("targets")
+            .and_then(Value::as_array)
+            .ok_or(MetadataError::Shape("package without `targets` array"))?;
+        targets.extend(entries.iter().filter_map(|entry| target_of(&name, entry)));
+    }
+    Ok(targets)
+}
+
+fn target_of(package: &str, entry: &Value) -> Option<Target> {
+    let kinds = entry.get("kind").and_then(Value::as_array)?;
+    let name = entry.get("name").and_then(Value::as_str)?;
+    let is_kind = |wanted: &str| kinds.iter().any(|kind| kind.as_str() == Some(wanted));
+    let selector = if is_kind("lib") || is_kind("cdylib") {
+        Selector::Lib
+    } else if is_kind("bin") {
+        Selector::Bin(name.to_owned())
+    } else {
+        return None;
+    };
+    Some(Target {
+        package: package.to_owned(),
+        crate_name: name.replace('-', "_"),
+        selector,
+    })
 }
 
 /// Extracts packages and their dependencies from `cargo metadata` JSON.

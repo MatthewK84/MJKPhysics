@@ -42,6 +42,12 @@ impl<To: Frame, From: Frame> Rotation<To, From> {
     /// The rotation `R_z(ψ)·R_y(θ)·R_x(φ)`, Eq. (CONV-11).
     #[must_use]
     pub fn from_euler(angles: EulerAngles) -> Self {
+        debug_assert!(
+            angles.yaw_rad.is_finite()
+                && angles.pitch_rad.is_finite()
+                && angles.roll_rad.is_finite(),
+            "Euler angles must be finite: {angles:?}"
+        );
         let yaw = axis_rotation(angles.yaw_rad, [0.0, 0.0, 1.0]);
         let pitch = axis_rotation(angles.pitch_rad, [0.0, 1.0, 0.0]);
         let roll = axis_rotation(angles.roll_rad, [1.0, 0.0, 0.0]);

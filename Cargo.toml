@@ -31,8 +31,11 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_path_to_error = "0.1.20"
 toml = "1.2.3"
 
-# Tooling only (xtask); engine crates may not depend on this.
+# Tooling only (xtask); engine crates may not depend on these.
+proc-macro2 = { version = "1.0.107", features = ["span-locations"] }
+rustc-demangle = "0.1.28"
 serde_json = "1.0.154"
+syn = { version = "2", features = ["full", "visit", "parsing"] }
 
 # Test-only dependencies.
 proptest = "1.12.0"
@@ -63,3 +66,12 @@ dbg_macro = "deny"
 exit = "deny"
 mem_forget = "deny"
 rc_mutex = "deny"
+# Power of Ten (#88). Rule 1: shallow nesting (threshold in clippy.toml).
+excessive_nesting = "deny"
+# Rule 2: no loop without an exit.
+infinite_loop = "deny"
+# Rule 6: a name means one thing within its scope.
+shadow_unrelated = "deny"
+# Rule 7: never discard a result that must be used, or an untyped value.
+let_underscore_must_use = "deny"
+let_underscore_untyped = "deny"

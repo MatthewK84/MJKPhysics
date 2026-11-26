@@ -263,7 +263,7 @@ y = 2 \\qquad\\text{(NOT-3)}
         let problems = check(&doc(text), &sources);
         assert_eq!(problems.len(), 2);
         assert!(matches!(&problems[0], Problem::UnknownCitation { id, .. } if id == "A-2"));
-        assert!(matches!(&problems[1], Problem::Malformed { text, .. } if text == "a1"));
+        assert!(matches!(&problems[1], Problem::Malformed { text: found, .. } if found == "a1"));
     }
 
     #[test]

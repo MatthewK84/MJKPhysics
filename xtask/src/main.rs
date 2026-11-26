@@ -3,20 +3,24 @@
 //! Tasks:
 //! - `layering`: checks that workspace crates only depend on what their layer allows.
 //! - `equations`: checks equation IDs in `docs/src` and their citations in code.
+//! - `standards`: the Power of Ten checks clippy cannot express (recursion, loop bounds,
+//!   macros, pointers, assertion density).
 
 mod equations;
 mod files;
 mod layering;
 mod metadata;
+mod standards;
 
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: cargo xtask <layering | equations>";
+const USAGE: &str = "usage: cargo xtask <layering | equations | standards>";
 
 fn main() -> ExitCode {
     match std::env::args().nth(1).as_deref() {
         Some("layering") => run_layering(),
         Some("equations") => run_equations(),
+        Some("standards") => run_standards(),
         Some("--help" | "-h") => {
             println!("{USAGE}");
             ExitCode::SUCCESS
@@ -86,4 +90,21 @@ fn run_equations() -> ExitCode {
         eprintln!("equation problem: {problem}");
     }
     ExitCode::FAILURE
+}
+
+fn run_standards() -> ExitCode {
+    match standards::run(&files::repo_root()) {
+        Ok(0) => {
+            println!("standards ok");
+            ExitCode::SUCCESS
+        }
+        Ok(count) => {
+            eprintln!("{count} standards problem(s)");
+            ExitCode::FAILURE
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::FAILURE
+        }
+    }
 }

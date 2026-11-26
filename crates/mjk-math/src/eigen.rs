@@ -169,6 +169,10 @@ impl<F: Frame> Mat3<F> {
                 value,
             });
         }
+        debug_assert!(
+            (self - self.transpose()).max_abs() <= 1e-9 * self.max_abs().max(1.0),
+            "symmetric_eigen reads only the upper triangle; the input must be symmetric"
+        );
         let [[xx, xy, xz], [_, yy, yz], [_, _, zz]] = self.rows();
         let mut sym = Sym {
             diag: [xx, yy, zz],
