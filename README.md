@@ -11,6 +11,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="https://github.com/MatthewK84/MJKPhysics/issues/1"><img alt="Roadmap: 84 issues" src="https://img.shields.io/badge/roadmap-84%20issues-5ee1ff"></a>
   <img alt="Status: pre-alpha" src="https://img.shields.io/badge/status-pre--alpha-ffb547">
   <img alt="Rust 1.97" src="https://img.shields.io/badge/rust-1.97-cfe0ff">

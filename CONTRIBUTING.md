@@ -37,6 +37,32 @@ Viewer (Node 22 or newer):
 cd viewer && npm ci && npm run check
 ```
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. Each check is its
+own job, so each can be required before merging:
+
+| Status check | What it runs |
+|---|---|
+| `Rust format` | `cargo fmt --all --check` |
+| `Clippy` | `cargo clippy --workspace --all-targets --locked -- -D warnings` |
+| `Tests (Linux)` | `cargo test --workspace --locked` |
+| `Crate layering` | `cargo xtask layering` |
+| `API docs` | `cargo doc --workspace --no-deps --locked` with `RUSTDOCFLAGS=-D warnings` |
+| `WebAssembly build` | release build of `mjk-wasm` for `wasm32-unknown-unknown`; raw and gzip sizes go to the job summary |
+| `Viewer` | `npm ci`, then typecheck, lint and format check in `viewer/` |
+
+All Rust jobs build with `RUSTFLAGS=-D warnings` and `--locked`, and use the toolchain pinned in
+`rust-toolchain.toml`. Third-party actions are pinned to full commit SHAs, and checkouts don't
+keep credentials.
+
+`.github/workflows/cross-platform.yml` runs the test suite on macOS and Windows every Monday and
+on demand. Scheduled workflows only run from the repository's default branch.
+
+**Branch protection.** To make CI block merges, a repository admin enables a rule for `main`
+(Settings → Rules → Rulesets, or Settings → Branches): require a pull request, require status
+checks to pass, and select the seven checks in the table above.
+
 ## Rust coding standard
 
 The workspace lint table in `Cargo.toml` applies to every crate; `clippy.toml` relaxes the
