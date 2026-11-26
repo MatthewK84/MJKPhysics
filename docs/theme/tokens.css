@@ -1,0 +1,16 @@
+/*
+ * Design tokens for the book's own additions (operator-grade-ui, section 4; ADR 0007). Every
+ * color in docs/theme comes from this file; mdBook's theme variables cover the rest of the page.
+ * Each value keeps 4.5:1 contrast against the page background of the mdBook themes it serves.
+ */
+:root,
+.light,
+.rust {
+  --mjk-color-error: #b3261e; /* 6.5:1 on light, 5.0:1 on rust */
+}
+
+.coal,
+.navy,
+.ayu {
+  --mjk-color-error: #ff8a80; /* 7.7:1 or more on coal, navy and ayu */
+}

@@ -18,6 +18,6 @@
 }
 
 .mjk-math-error {
-  color: #c0392b;
+  color: var(--mjk-color-error);
   font-family: var(--mono-font, monospace);
 }

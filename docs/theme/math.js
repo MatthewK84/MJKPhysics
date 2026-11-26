@@ -26,7 +26,7 @@
    */
   function renderInto(tex, target, options) {
     if (katex === undefined) {
-      target.textContent = tex;
+      target.replaceChildren(tex);
       target.classList.add('mjk-math-error');
       return;
     }
@@ -42,12 +42,12 @@
     if (pre === null) {
       return;
     }
-    const tex = code.textContent ?? '';
+    const tex = code.textContent;
     const block = document.createElement('div');
     block.className = 'mjk-math-display';
-    const match = EQUATION_ID.exec(tex);
-    if (match !== null && match[1] !== undefined) {
-      block.id = `eq-${match[1]}`;
+    const id = EQUATION_ID.exec(tex)?.[1];
+    if (id !== undefined) {
+      block.id = `eq-${id}`;
     }
     renderInto(tex, block, DISPLAY);
     pre.replaceWith(block);
@@ -61,8 +61,14 @@
   function isInlineMath(code) {
     const before = code.previousSibling;
     const after = code.nextSibling;
-    const opens = before !== null && before.nodeType === Node.TEXT_NODE && (before.textContent ?? '').endsWith('$');
-    const closes = after !== null && after.nodeType === Node.TEXT_NODE && (after.textContent ?? '').startsWith('$');
+    const opens =
+      before !== null &&
+      before.nodeType === Node.TEXT_NODE &&
+      (before.textContent ?? '').endsWith('$');
+    const closes =
+      after !== null &&
+      after.nodeType === Node.TEXT_NODE &&
+      (after.textContent ?? '').startsWith('$');
     return opens && closes;
   }
 
@@ -80,7 +86,7 @@
     after.textContent = (after.textContent ?? '').slice(1);
     const span = document.createElement('span');
     span.className = 'mjk-math-inline';
-    renderInto(code.textContent ?? '', span, INLINE);
+    renderInto(code.textContent, span, INLINE);
     code.replaceWith(span);
   }
 

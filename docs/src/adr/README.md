@@ -18,5 +18,8 @@ number it sequentially.
 | [0004](0004-renderer-stack.md) | Rust physics compiled to WebAssembly, drawn by three.js with WebGPU | Accepted |
 | [0005](0005-documentation-math.md) | GitHub-native math syntax, rendered in the book by KaTeX | Accepted |
 | [0006](0006-errors-and-configuration.md) | One engine error type in `mjk-core`; configuration parsed from TOML text with exact field paths | Accepted |
+| [0007](0007-interface-standard.md) | Operator-grade interface rules for the viewer and the book; the 3D scene and README hero are exempt | Accepted |
 
-Status values: **Proposed**, **Accepted**, **Superseded by ADR NNNN**, **Rejected**.
+Status values: **Proposed**, **Accepted**, **Superseded by ADR NNNN**, **Rejected**. An accepted
+ADR may also say **extended by ADR NNNN** when a later record adds to it without changing what it
+decided; that note is the only edit an accepted ADR receives.

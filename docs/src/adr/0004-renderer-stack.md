@@ -1,6 +1,6 @@
 # ADR 0004: Rust physics in WebAssembly, rendered by three.js with WebGPU
 
-- **Status:** Accepted
+- **Status:** Accepted; extended by [ADR 0007](0007-interface-standard.md)
 - **Date:** 2026-11-26
 - **Issues:** [#32](https://github.com/MatthewK84/MJKPhysics/issues/32), [#34](https://github.com/MatthewK84/MJKPhysics/issues/34), [#83](https://github.com/MatthewK84/MJKPhysics/issues/83)
 

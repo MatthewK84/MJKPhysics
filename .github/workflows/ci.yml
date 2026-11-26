@@ -233,3 +233,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
+      - name: Type-check, lint and format-check the README hero and book scripts
+        run: |
+          npm run typecheck:scripts
+          npm run lint:scripts
+          npm run format:scripts
+      - name: Banned interface patterns (operator-grade-ui, ADR 0007)
+        run: npm run lint:ui
