@@ -1,9 +1,10 @@
 //! `cargo xtask standards`: the Power of Ten checks that clippy cannot express (#88).
 //!
-//! - Rule 1, no recursion: cycles in the compiled call graph of every workspace target.
+//! - Rule 1, no recursion: cycles in the compiled call graph of every workspace target except
+//!   xtask.
 //! - Rules 2, 8 and 9: bounded loops, no macros or conditional compilation, no trait objects or
-//!   function pointers, in engine crates.
-//! - Rule 5: assertion density per engine crate, reported but not enforced.
+//!   function pointers, in every workspace crate.
+//! - Rule 5: assertion density per crate, reported but not enforced.
 
 mod callgraph;
 mod ir_build;
@@ -15,6 +16,13 @@ use std::path::Path;
 use crate::files;
 use crate::layering::ENGINE;
 use crate::metadata::{self, Target};
+
+/// Workspace crates outside the engine, held to the same source rules.
+const OTHER_SOURCES: &[(&str, &str)] = &[
+    ("mjk-cli", "crates/mjk-cli/src"),
+    ("mjk-wasm", "crates/mjk-wasm/src"),
+    ("xtask", "xtask/src"),
+];
 
 /// Packages exempt from the recursion check. xtask is repository tooling, not shipped
 /// software, and walks syntax trees with syn's recursive visitor (CONTRIBUTING.md).
@@ -32,21 +40,42 @@ pub fn run(root: &Path) -> Result<usize, String> {
     Ok(source_problems + recursion_problems)
 }
 
+/// Every workspace source tree, as (crate, directory).
+fn source_trees() -> Vec<(String, String)> {
+    let engine = ENGINE
+        .iter()
+        .map(|name| ((*name).to_owned(), format!("crates/{name}/src")));
+    let others = OTHER_SOURCES
+        .iter()
+        .map(|(name, dir)| ((*name).to_owned(), (*dir).to_owned()));
+    engine.chain(others).collect()
+}
+
+/// Checks one source tree, returning its findings and counts.
+fn check_tree(
+    root: &Path,
+    dir: &str,
+) -> Result<(Vec<source::Finding>, source::AssertionCount), String> {
+    let sources =
+        files::read_tree(root, dir, "rs").map_err(|error| format!("reading {dir}: {error}"))?;
+    let mut findings = Vec::new();
+    let mut counts = source::AssertionCount::default();
+    for (path, text) in &sources {
+        let report =
+            source::check_source(path, text).map_err(|error| format!("{path}: {error}"))?;
+        counts.functions += report.counts.functions;
+        counts.assertions += report.counts.assertions;
+        findings.extend(report.findings);
+    }
+    Ok((findings, counts))
+}
+
 fn run_source_checks(root: &Path) -> Result<usize, String> {
     let mut findings = Vec::new();
     println!("rule 5 (assertion density), reported only:");
-    for crate_name in ENGINE {
-        let dir = format!("crates/{crate_name}/src");
-        let sources = files::read_tree(root, &dir, "rs")
-            .map_err(|error| format!("reading {dir}: {error}"))?;
-        let mut counts = source::AssertionCount::default();
-        for (path, text) in &sources {
-            let report =
-                source::check_source(path, text).map_err(|error| format!("{path}: {error}"))?;
-            counts.functions += report.counts.functions;
-            counts.assertions += report.counts.assertions;
-            findings.extend(report.findings);
-        }
+    for (crate_name, dir) in source_trees() {
+        let (found, counts) = check_tree(root, &dir)?;
+        findings.extend(found);
         println!(
             "  {crate_name:<14} {:>4} functions  {:>4} assertions",
             counts.functions, counts.assertions

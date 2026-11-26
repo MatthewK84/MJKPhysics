@@ -1,5 +1,7 @@
 # Dependency updates, weekly and grouped so each ecosystem opens at most one pull request a week
 # for routine bumps. Major versions arrive one per pull request, since they need review.
+# A release is proposed only once it is 14 days old (cooldown), so a compromised or broken
+# release has time to be noticed and yanked. Security updates are not delayed.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -7,6 +9,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 14
     groups:
       actions:
         patterns: ["*"]
@@ -18,6 +22,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 14
     open-pull-requests-limit: 5
     groups:
       cargo-minor-and-patch:
@@ -30,6 +36,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 14
     open-pull-requests-limit: 5
     groups:
       npm-minor-and-patch:

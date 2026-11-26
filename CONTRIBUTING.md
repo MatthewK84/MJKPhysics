@@ -28,10 +28,25 @@ cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D
 ```
 
 ```bash
-cargo test --workspace --locked && cargo xtask layering
+cargo test --workspace --locked && cargo xtask layering && cargo xtask equations && cargo xtask standards
 ```
 
-Viewer (Node 22 or newer):
+Supply chain, coverage and mutation testing need three cargo tools
+(`cargo install --locked cargo-deny cargo-llvm-cov cargo-mutants`) and `rustup component add llvm-tools`:
+
+```bash
+cargo deny --locked check
+```
+
+```bash
+cargo llvm-cov --workspace --exclude xtask --exclude mjk-cli --exclude mjk-wasm --fail-under-lines 90
+```
+
+```bash
+git diff main > /tmp/change.diff && cargo mutants --workspace --in-diff /tmp/change.diff
+```
+
+Viewer, README hero and book scripts (Node 22 or newer):
 
 ```bash
 cd viewer && npm ci && npm run check
@@ -40,7 +55,8 @@ cd viewer && npm ci && npm run check
 ## Continuous integration
 
 `.github/workflows/ci.yml` and `.github/workflows/docs.yml` run on every pull request and every
-push to `main`. Each check is its own job, so each can be required before merging:
+push to `main`; `ci.yml` also runs daily, so a newly published advisory against a locked crate
+fails within a day. Each check is its own job, so each can be required before merging:
 
 | Status check | What it runs |
 |---|---|
@@ -48,53 +64,101 @@ push to `main`. Each check is its own job, so each can be required before mergin
 | `Clippy` | `cargo clippy --workspace --all-targets --locked -- -D warnings` |
 | `Tests (Linux)` | `cargo test --workspace --locked` |
 | `Crate layering` | `cargo xtask layering` |
+| `Power of Ten` | `cargo xtask standards`: recursion, loop bounds, macros, conditional compilation, pointers, assertion density |
+| `Supply chain` | `cargo deny --locked check` against `deny.toml` |
+| `Coverage` | engine line coverage of at least 90 %, reported in the job summary |
+| `Mutation testing (changed lines)` | `cargo mutants --in-diff` on the lines the change touches; any surviving mutant fails |
 | `API docs` | `cargo doc --workspace --no-deps --locked` with `RUSTDOCFLAGS=-D warnings` |
 | `WebAssembly build` | release build of `mjk-wasm` for `wasm32-unknown-unknown`; raw and gzip sizes go to the job summary |
-| `Viewer` | `npm ci`, then typecheck, lint and format check in `viewer/` |
+| `Viewer` | `npm audit`; typecheck, lint and format check of `viewer/`, the README hero and the book scripts; `npm run lint:ui` |
 | `Docs site` | `cargo xtask equations`, type-check of `docs/theme/math.js`, `mdbook build docs` (workflow `docs.yml`) |
 
-All Rust jobs build with `RUSTFLAGS=-D warnings` and `--locked`, and use the toolchain pinned in
+All Rust jobs build with `RUSTFLAGS=-D warnings` (except mutation testing, where a mutant that only
+adds a warning must still be tested) and `--locked`, and use the toolchain pinned in
 `rust-toolchain.toml`. Third-party actions are pinned to full commit SHAs, and checkouts don't
 keep credentials.
 
 On `main`, `docs.yml` also publishes the book to GitHub Pages; that requires Settings → Pages →
 Source: *GitHub Actions*, and until then the publish job skips with a warning.
 
-`.github/workflows/cross-platform.yml` runs the test suite on macOS and Windows every Monday and
-on demand. Scheduled workflows only run from the repository's default branch.
+Scheduled workflows, which only run from the default branch:
+
+- `cross-platform.yml` runs the test suite on macOS and Windows every Monday.
+- `deep-analysis.yml` mutates the whole engine every Sunday, in four shards.
+- Dependabot (`.github/dependabot.yml`) opens grouped updates for actions, cargo and npm weekly.
 
 **Branch protection.** To make CI block merges, a repository admin enables a rule for `main`
 (Settings → Rules → Rulesets, or Settings → Branches): require a pull request, require status
-checks to pass, and select the eight checks in the table above.
+checks to pass, and select the twelve checks in the table above.
 
-## Rust coding standard
+## Engineering standards
 
-The workspace lint table in `Cargo.toml` applies to every crate; `clippy.toml` relaxes the
-panic-related lints inside tests only, where a panic is simply a failing test.
+Every rule below is enforced by a tool where a tool can check it; the rest are review items, and
+the table says why. The book's [Engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html)
+page explains the reasoning.
+
+### Rust: the Power of Ten
+
+The workspace lint table in `Cargo.toml` applies to every crate; `clippy.toml` sets thresholds and
+relaxes the panic-related lints inside tests only, where a panic is simply a failing test. Rule
+numbers are the Power of Ten's, as `cargo xtask standards` reports them.
 
 | # | Rule | How it is enforced |
 |---|---|---|
-| 1 | **Simple control flow.** Early returns, `let … else`, iterator adaptors; avoid deep nesting. | clippy `pedantic`; review |
-| 2 | **No global mutable state.** Module-level items are `const` or immutable `static`; state is passed explicitly. | `unsafe_code = "forbid"` rules out `static mut`; review |
-| 3 | **No panicking shortcuts or unchecked features.** No `unsafe`, `unwrap`, `expect`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`, slice indexing that can panic, silent `as` casts, or exact float comparison. | `forbid`/`deny` lints: `unsafe_code`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unreachable`, `indexing_slicing`, `as_conversions`, `float_cmp` |
-| 4 | **Tight scoping.** Declare at first use, immutable by default, smallest visibility that works. | compiler; review |
-| 5 | **Static analysis.** Formatting, lints and the layering check run on every PR. | `rustfmt`, `clippy -D warnings`, `cargo xtask layering`, CI |
-| 6 | **No recursion.** Use loops and explicit fixed-capacity stacks (for example in BVH traversal). | review: clippy has no lint for this |
-| 7 | **Small, focused functions.** At most 60 lines; prefer pure functions. | clippy `too_many_lines` (threshold in `clippy.toml`) |
-| 8 | **Declare all data.** Public items are documented; physical quantities carry units in their names (`mass_kg`, `omega_rad_s`). | `missing_docs`; review |
-| 9 | **One error model.** Fallible functions return `Result<_, EngineError>` (`mjk-core`). Configuration errors name the exact field; numerical failures report sim time and quantity. Errors are never swallowed. | lints above; review |
-| 10 | **Macros stay simple.** `macro_rules!` only for trivial repetition. The only procedural macro in engine crates is serde's derive, for configuration types (ADR 0006). | engine external-dependency allowlist in `xtask/src/layering.rs` |
+| 1 | **Simple control flow; no recursion.** Early returns, `let … else`, iterator adaptors. | clippy `excessive_nesting` (threshold 4: an `impl` block counts as a level, so methods get two levels and free functions three) and `pedantic`. Recursion: `cargo xtask standards` builds every workspace target's LLVM IR and reports any call-graph cycle through our code, direct or mutual, including calls resolved through generics, traits and closures. |
+| 2 | **Every loop has a fixed upper bound.** | `for` loops run over finite ranges and collections. Every `loop` and `while` in the workspace carries a `// bound:` comment naming its bound (`cargo xtask standards`); clippy `infinite_loop` is denied. |
+| 3 | **No heap allocation after initialization.** | Review, until the allocation-counting test on `World::step` lands with [#13](https://github.com/MatthewK84/MJKPhysics/issues/13). |
+| 4 | **Short functions.** At most 50 lines. | clippy `too_many_lines` (threshold in `clippy.toml`) |
+| 5 | **Assertions state preconditions.** Engine functions that take physical quantities check them with `debug_assert!`. | Review: a per-function quota produces assertions that check nothing. `cargo xtask standards` reports density per crate so a drop is visible. |
+| 6 | **Smallest possible scope.** Declare at first use, immutable by default, smallest visibility. | compiler; clippy `shadow_unrelated` |
+| 7 | **Check every return value; validate parameters.** No `unwrap`, `expect`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`, panicking indexing, silent `as` casts or exact float comparison. | `unused_must_use` under `-D warnings`; clippy `must_use_candidate`, `let_underscore_must_use`, `let_underscore_untyped`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unreachable`, `indexing_slicing`, `as_conversions`, `float_cmp` |
+| 8 | **Limited preprocessor.** No `macro_rules!` and no conditional compilation other than `#[cfg(test)]` outside tests. The only procedural macro in engine crates is serde's derive, for configuration types (ADR 0006). | `cargo xtask standards`; the engine dependency allowlist in `xtask/src/layering.rs` |
+| 9 | **Restricted pointers.** No `unsafe`, no `dyn` trait objects and no function pointer types outside tests; use generics. | `unsafe_code = "forbid"`; `cargo xtask standards` |
+| 10 | **All warnings on, static analysis daily.** | `-D warnings`, clippy `pedantic`, `rustfmt`, `cargo-deny`, coverage of at least 90 %, mutation testing on every change and weekly on everything; CI daily |
 
-Engine-specific rules:
+Project rules on top of the ten:
 
-- **No heap allocation in `World::step`.** Allocate at construction; verified by an
-  allocation-counting test once the world loop exists
-  ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)).
+- **One error model.** Fallible functions return `Result<_, EngineError>` (`mjk-core`).
+  Configuration errors name the exact field; numerical failures report sim time and quantity.
+  Errors are never swallowed. Enforced by the lints above and review.
+- **Declare all data.** Public items are documented (`missing_docs`); physical quantities carry
+  units in their names (`mass_kg`, `omega_rad_s`), which review checks.
 - **Transcendental functions go through `libm`**, so native and WebAssembly builds produce
   identical bits ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
 - **Conventions are fixed**: NED world frame, FRD body frame, Hamilton scalar-first quaternions,
   SI units with unit suffixes. Use the symbols and equation IDs in
   [`docs/src/conventions.md`](docs/src/conventions.md).
+
+The source checks (rules 2, 5, 8 and 9) cover every workspace crate, test code excepted.
+
+**Exemption: `xtask`.** Repository tooling is held to every rule except recursion: it walks
+syntax trees with `syn`'s visitor, which recurses with the depth of the source's own nesting.
+
+### Mutation testing
+
+A mutant is a small change to the code, such as `<` to `<=` or `+` to `-`. If every test still
+passes, the tests do not pin that behaviour. Mutation testing runs on the lines each change
+touches, and every week on the whole engine; xtask and the two front-end crates are excluded
+(`.cargo/mutants.toml`).
+
+Fix a surviving mutant with a test that fails on it. A mutant that no test can distinguish,
+because both versions compute the same result for every input (for example, the switch point
+between a series and a closed form, where both are exact to rounding), goes in `exclude_re` in
+`.cargo/mutants.toml` with a comment saying why. Patterns name the file and function, never a
+line number.
+
+### Supply chain
+
+`deny.toml` fails the build on any RustSec advisory (vulnerable, unmaintained or unsound), a
+yanked crate, a licence outside MIT, Apache-2.0 and Unicode-3.0, two versions of one crate, a
+wildcard version or a source other than crates.io. Changing the policy is a reviewed change to
+that file.
+
+npm dependencies are pinned to exact versions and `npm audit` must report nothing. Dependabot
+proposes a release only once it is 14 days old, so a compromised or broken release has time to
+be noticed; a dependency added by hand should be as old, unless only a newer release clears an
+audit advisory (the current ESLint and typescript-eslint pins are such releases). Security
+updates are never delayed.
 
 ## Crate layering and dependencies
 
@@ -104,24 +168,39 @@ rejects any dependency outside a crate's allowed set, and engine crates may use 
 the rule table in `xtask/src/layering.rs` and recording the decision in an architecture decision
 record ([#6](https://github.com/MatthewK84/MJKPhysics/issues/6)).
 
-## TypeScript coding standard (viewer)
+## TypeScript and JavaScript coding standard
 
-`viewer/tsconfig.json` enables `strict` plus `noUncheckedIndexedAccess`,
-`exactOptionalPropertyTypes` and related flags. `viewer/eslint.config.js` builds on
-`typescript-eslint`'s strict type-checked rules.
+`viewer/eslint.config.js` governs the viewer and the repository's other scripts (the README hero
+in `assets/readme` and the book's renderer in `docs/theme`). It builds on `typescript-eslint`'s
+strict type-checked rules. Every `tsconfig.json` enables `strict` plus `noUncheckedIndexedAccess`,
+`exactOptionalPropertyTypes`, `noUnusedLocals`, `noUnusedParameters` and related flags.
+JavaScript files use `// @ts-check` with JSDoc types and are type-checked with `checkJs`.
 
 | # | Rule | How it is enforced |
 |---|---|---|
-| 1 | Early returns and shallow control flow | `max-depth` 3, `complexity` 10 |
+| 1 | Early returns and shallow control flow | `max-depth` 3, `complexity` 10, `no-else-return` |
 | 2 | No global state; don't mutate inputs | `no-restricted-syntax` (assigning to `window`/`globalThis`), `no-param-reassign` |
-| 3 | No legacy or unsafe features: `eval`, `document.write`, `any`, non-null `!` | `no-eval`, `no-new-func`, `no-restricted-properties`, `no-explicit-any`, `no-non-null-assertion` |
-| 4 | Block scoping: `const` by default, never `var` | `no-var`, `prefer-const` |
-| 5 | Static analysis | ESLint, Prettier, `tsc --noEmit` in CI |
-| 6 | Avoid deep recursion | review |
-| 7 | Small, pure functions | `max-lines-per-function` 60 |
-| 8 | Explicit data shapes and signatures | `explicit-function-return-type`, `explicit-module-boundary-types`; `interface`/`type` for shapes |
-| 9 | Consistent async error handling; no floating promises | `no-floating-promises`, `no-misused-promises` |
-| 10 | Never modify built-in prototypes | `no-extend-native` |
+| 3 | No legacy or unsafe features: `eval`, `with`, `document.write`, `any`, non-null `!`, `@ts-ignore` | `no-eval`, `no-implied-eval`, `no-new-func`, `no-with`, `no-restricted-properties`, `no-explicit-any`, `no-non-null-assertion`, `ban-ts-comment`; `lint:ui` also catches `any` in JSDoc |
+| 4 | Block scoping: `const` by default, never `var`; no shadowing | `no-var`, `prefer-const`, `no-shadow`, `block-scoped-var` |
+| 5 | Static analysis without suppressions | ESLint, Prettier and `tsc` in CI; inline `eslint-disable` comments are ignored and reported (`noInlineConfig`) |
+| 6 | No deep recursion | Review: ESLint has no rule for call cycles |
+| 7 | Small, pure functions | `max-lines-per-function` 50 |
+| 8 | Explicit data shapes and signatures | `explicit-function-return-type`, `explicit-module-boundary-types` in TypeScript; in JavaScript, JSDoc `@param` and `@returns` checked by `tsc --checkJs`, with review for missing `@returns` |
+| 9 | Consistent async error handling; no floating promises | `no-floating-promises`, `no-misused-promises`, `only-throw-error`, `prefer-promise-reject-errors` |
+| 10 | Never modify built-in prototypes | `no-extend-native`, `no-prototype-builtins` |
+
+### Interface standard
+
+Interface code follows [ADR 0007](docs/src/adr/0007-interface-standard.md): tokens from one file,
+no gradients, blur, radius above 4 px, decorative color, emoji or slow motion, and self-hosted
+assets. `npm run lint:ui` scans `viewer/src` and `docs/theme` and must report nothing. The
+rendered 3D scene and the README hero are exempt.
+
+### Python (planned)
+
+Python arrives with the bindings in [#78](https://github.com/MatthewK84/MJKPhysics/issues/78).
+It will follow the same ten principles with `ruff` and `mypy --strict`, configured in its
+`pyproject.toml` and run in CI from the first commit.
 
 ## Physical models and documentation
 

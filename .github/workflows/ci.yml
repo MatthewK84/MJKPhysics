@@ -230,6 +230,8 @@ jobs:
           cache: npm
           cache-dependency-path: viewer/package-lock.json
       - run: npm ci
+      - name: Known vulnerabilities in npm dependencies
+        run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check

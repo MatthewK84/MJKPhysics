@@ -96,6 +96,8 @@ pub fn is_valid_id(id: &str) -> bool {
 fn enclosed<'a>(line: &'a str, open: &str, close: &str) -> Vec<&'a str> {
     let mut found = Vec::new();
     let mut rest = line;
+    // bound: each pass consumes at least `open` and `close` from `rest`, or stops; at most
+    // `line.len()` passes.
     while let Some(start) = rest.find(open) {
         let after = rest.get(start + open.len()..).unwrap_or_default();
         let Some(end) = after.find(close) else {

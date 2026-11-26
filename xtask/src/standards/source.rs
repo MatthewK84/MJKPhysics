@@ -1,4 +1,4 @@
-//! Source-level Power of Ten checks on engine crates.
+//! Source-level Power of Ten checks on workspace crates.
 //!
 //! - Rule 2: every `loop` and `while` carries a `// bound:` comment naming its upper bound.
 //! - Rule 8: no `macro_rules!` and no conditional compilation other than `#[cfg(test)]`.
@@ -193,7 +193,7 @@ impl<'ast> Visit<'ast> for Checker<'_> {
             self.push(
                 node.span(),
                 Rule::Macros,
-                "`macro_rules!` in an engine crate",
+                "`macro_rules!`; write a function or a generic instead",
             );
         }
         visit::visit_item_macro(self, node);
