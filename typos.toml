@@ -1,0 +1,23 @@
+# Spell check (typos), run in CI on every change (CONTRIBUTING.md, "Continuous integration").
+# The US locale also rejects British spellings, in prose and inside identifiers: the project
+# writes American English throughout (CLAUDE.md).
+
+[default]
+locale = "en-us"
+# Text between these markers is not checked, for example the table of British spellings to
+# avoid in CLAUDE.md.
+extend-ignore-re = ["(?s)typos: off.*?typos: on"]
+
+[default.extend-words]
+# North-East-Down, the world frame.
+NED = "NED"
+# Software in the loop.
+SITL = "SITL"
+
+[default.extend-identifiers]
+# Shepperd's method for converting a rotation matrix to a quaternion (Shepperd, 1978).
+Shepperd = "Shepperd"
+shepperd = "shepperd"
+
+[files]
+extend-exclude = ["*.png", "Cargo.lock", "package-lock.json", "*.proptest-regressions"]

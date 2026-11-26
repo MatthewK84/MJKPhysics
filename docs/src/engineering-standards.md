@@ -13,7 +13,7 @@ failure modes can be checked by a tool rather than trusted.
 
 | When | What runs |
 |---|---|
-| Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the viewer and script checks, the book build |
+| Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the viewer and script checks, the book build |
 | Daily | The same suite, so a newly published advisory against a locked dependency fails within a day |
 | Weekly | Tests on macOS and Windows; mutation testing of the whole engine; Dependabot updates |
 
@@ -127,6 +127,13 @@ $`(2/q_0)\,(1 - n^2/(3q_0^2))`$. For a unit quaternion $`q_0^2 = 1 - n^2`$, so t
 contributes only $`O(n^4)`$, under $`10^{-24}`$ where the series is used. The code now evaluates
 $`(2/q_0)(1 - n^2/3)`$, which has the same truncation order and no equivalent mutants
 ([SO(3) maps](so3.md)).
+
+## Spelling
+
+The project writes American English. `typos`, with its US locale, runs on every change and fails
+on misspellings and on British spellings, in prose and inside identifiers: a British spelling in
+the middle of a function name fails as readily as one in a sentence. Project terms such as NED and
+SITL, and the name Shepperd, are allowed in `typos.toml`.
 
 ## Supply chain
 

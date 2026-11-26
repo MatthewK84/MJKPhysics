@@ -15,6 +15,10 @@ enforced by tools wherever a tool can enforce them, and by review where none can
 
 Commit subjects are imperative and under about 72 characters ("Add RK4 integrator", not "Added").
 
+Write American English everywhere: code, comments, docs, commit messages and issues. CI runs
+`typos` with the US locale, which rejects British spellings, including inside identifiers. Text
+between `typos: off` and `typos: on` markers is not checked; use them only for quoted material.
+
 ## Running the checks locally
 
 Rust (toolchain pinned in `rust-toolchain.toml`):
@@ -66,6 +70,7 @@ fails within a day. Each check is its own job, so each can be required before me
 | `Crate layering` | `cargo xtask layering` |
 | `Power of Ten` | `cargo xtask standards`: recursion, loop bounds, macros, conditional compilation, pointers, assertion density |
 | `Supply chain` | `cargo deny --locked check` against `deny.toml` |
+| `Spelling` | `typos` with the US locale (`typos.toml`): typos and British spellings, in prose and identifiers |
 | `Coverage` | engine line coverage of at least 90 %, reported in the job summary |
 | `Mutation testing (changed lines)` | `cargo mutants --in-diff` on the lines the change touches; any surviving mutant fails |
 | `API docs` | `cargo doc --workspace --no-deps --locked` with `RUSTDOCFLAGS=-D warnings` |
@@ -89,7 +94,7 @@ Scheduled workflows, which only run from the default branch:
 
 **Branch protection.** To make CI block merges, a repository admin enables a rule for `main`
 (Settings → Rules → Rulesets, or Settings → Branches): require a pull request, require status
-checks to pass, and select the twelve checks in the table above.
+checks to pass, and select the thirteen checks in the table above.
 
 ## Engineering standards
 

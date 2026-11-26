@@ -789,7 +789,7 @@ function drawVelocityAndDrag(svg, rig) {
 }
 
 /** @param {Element} svg @param {Point} cg @returns {void} */
-function drawCentreOfMass(svg, cg) {
+function drawCenterOfMass(svg, cg) {
   const style = { fill: COLOR.bgTop, stroke: COLOR.text, 'stroke-width': 1.6 };
   el(svg, 'circle', { cx: cg.x, cy: cg.y, r: 5, ...style });
   const [x, y] = [cg.x, cg.y];
@@ -817,7 +817,7 @@ function drawQuadrotor(svg, cam) {
   drawBodyXY(svg, rig);
   drawYawRate(svg, rig.toScreen);
   drawVelocityAndDrag(svg, rig);
-  drawCentreOfMass(svg, rig.cg);
+  drawCenterOfMass(svg, rig.cg);
 }
 
 // ------------------------------------------------------------------ right panels

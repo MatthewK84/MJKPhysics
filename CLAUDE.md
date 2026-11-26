@@ -6,8 +6,12 @@ Always write American English, never British English, in everything this project
 code identifiers and comments, documentation and the book (`docs/`), the README, CONTRIBUTING,
 commit messages, and GitHub issues, pull requests and comments.
 
+CI enforces this: `typos` with the US locale (`typos.toml`) fails the build on British spellings,
+including inside identifiers.
+
 Common corrections:
 
+<!-- typos: off -->
 | Write | Not |
 |---|---|
 | center, meter, fiber | centre, metre, fibre |
@@ -17,6 +21,7 @@ Common corrections:
 | license (noun and verb), defense, practice (noun and verb) | licence, defence, practise |
 | disk (rotor disk, disk loading), gray, aluminum, maneuver, airplane | disc, grey, aluminium, manoeuvre, aeroplane |
 | acknowledgment, judgment, toward, afterward | acknowledgement, judgement, towards, afterwards |
+<!-- typos: on -->
 
 Exceptions: keep the published spelling of quoted titles in references, proper nouns and names,
 and identifiers defined by external code or standards.

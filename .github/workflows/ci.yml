@@ -98,6 +98,19 @@ jobs:
       - name: Advisories, licenses, duplicate versions and sources (deny.toml)
         run: cargo deny --locked check
 
+  spelling:
+    name: Spelling
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: typos-cli@1.52.2
+      - name: Typos and British spellings, in prose and identifiers (typos.toml)
+        run: typos
+
   coverage:
     name: Coverage
     runs-on: ubuntu-24.04

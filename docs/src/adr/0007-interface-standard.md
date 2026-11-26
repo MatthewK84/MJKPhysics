@@ -51,7 +51,7 @@ a CDN (ADR 0005).
 - The exemption for the scene must be applied honestly: a gradient behind a HUD panel is chrome,
   not sky.
 - The offline viewer needs its fonts and environment maps committed or fetched at build time,
-  with their licences recorded.
+  with their licenses recorded.
 
 ## Alternatives considered
 
