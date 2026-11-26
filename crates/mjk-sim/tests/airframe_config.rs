@@ -66,15 +66,18 @@ fn cases() -> Vec<Case> {
             "triangle inequality",
         ),
     ];
-    table
-        .into_iter()
-        .map(|((file, text), path, reason)| Case {
-            file,
-            text,
-            path,
-            reason,
-        })
-        .collect()
+    table.into_iter().map(case_from_tuple).collect()
+}
+
+fn case_from_tuple(
+    ((file, text), path, reason): ((&'static str, &'static str), &'static str, &'static str),
+) -> Case {
+    Case {
+        file,
+        text,
+        path,
+        reason,
+    }
 }
 
 #[test]
