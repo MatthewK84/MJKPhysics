@@ -27,7 +27,8 @@ Equations carry stable IDs such as (CONV-3) so code comments can cite them.
 - A dot is a time derivative taken in the world frame unless stated otherwise.
 
 In code, `q_wb` is $`\mathbf{q}_{WB}`$ ("world from body"), and vectors carry their frame in their
-type, as in `Vec3<Body>` and `Vec3<World>` ([#8](https://github.com/MatthewK84/MJKPhysics/issues/8)).
+type, as in `Vec3<Body>` and `Vec3<World>`; the attitude is a `Rotation<World, Body>`
+(see [Math types](math-types.md)).
 
 ## 2. Reference frames
 

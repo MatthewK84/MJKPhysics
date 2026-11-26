@@ -26,7 +26,8 @@ versioned headers, rejection of unknown fields, field-path messages and plausibi
   depend on `mjk-core`, and it depends on nothing. The enum is `#[non_exhaustive]` and has three
   variants:
   - `Config { document, path, reason }`;
-  - `Numerical { sim_time_s, quantity, value }`;
+  - `Numerical { sim_time_s, quantity, value }`, where `sim_time_s` is `None` outside a running
+    simulation, for example during trim or analysis;
   - `Convergence { solver, iterations, residual }`.
 
   The numerical and convergence variants use `&'static str` names, so creating them on the

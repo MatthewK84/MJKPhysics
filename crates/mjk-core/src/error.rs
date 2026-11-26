@@ -23,8 +23,9 @@ pub enum EngineError {
     },
     /// A computed quantity became non-finite or left its physical range.
     Numerical {
-        /// Simulation time at which it happened.
-        sim_time_s: f64,
+        /// Simulation time at which it happened, or `None` outside a running simulation
+        /// (for example during trim or analysis).
+        sim_time_s: Option<f64>,
         /// Name of the quantity, such as `"rotor 3 inflow"`.
         quantity: &'static str,
         /// The offending value.
@@ -62,13 +63,15 @@ impl fmt::Display for EngineError {
                 reason,
             } => write!(f, "{document}: {path}: {reason}"),
             Self::Numerical {
-                sim_time_s,
+                sim_time_s: Some(time),
                 quantity,
                 value,
-            } => write!(
-                f,
-                "numerical failure at t = {sim_time_s} s: {quantity} = {value}"
-            ),
+            } => write!(f, "numerical failure at t = {time} s: {quantity} = {value}"),
+            Self::Numerical {
+                sim_time_s: None,
+                quantity,
+                value,
+            } => write!(f, "numerical failure: {quantity} = {value}"),
             Self::Convergence {
                 solver,
                 iterations,
@@ -101,13 +104,22 @@ mod tests {
     #[test]
     fn numerical_and_convergence_messages() {
         let numerical = EngineError::Numerical {
-            sim_time_s: 12.5,
+            sim_time_s: Some(12.5),
             quantity: "rotor 3 inflow",
             value: f64::NAN,
         };
         assert_eq!(
             numerical.to_string(),
             "numerical failure at t = 12.5 s: rotor 3 inflow = NaN"
+        );
+        let offline = EngineError::Numerical {
+            sim_time_s: None,
+            quantity: "trim residual",
+            value: f64::INFINITY,
+        };
+        assert_eq!(
+            offline.to_string(),
+            "numerical failure: trim residual = inf"
         );
         let convergence = EngineError::Convergence {
             solver: "BEMT inflow",

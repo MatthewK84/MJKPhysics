@@ -5,6 +5,7 @@
 # Foundations
 
 - [Conventions and notation](conventions.md)
+- [Math types](math-types.md)
 - [Architecture](architecture.md)
 - [Configuration files](configuration.md)
 

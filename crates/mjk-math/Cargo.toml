@@ -10,6 +10,10 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
+mjk-core.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
 
 [lints]
 workspace = true

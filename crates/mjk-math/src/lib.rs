@@ -1,8 +1,32 @@
-//! Frame-tagged linear algebra, quaternions and SO(3) maps.
+//! Frame-tagged linear algebra and quaternions.
 //!
-//! Lowest layer of the engine: it depends on nothing else in the workspace and uses no
-//! third-party math crates. Vectors will carry their reference frame in the type
-//! (`Vec3<Body>` versus `Vec3<World>`) so frame mixing is a compile error.
+//! Lowest math layer of the engine, hand-written with no third-party math crates (ADR 0001).
+//! Every vector, matrix and rotation carries its reference frame in its type, so mixing frames
+//! is a compile error rather than a wrong answer:
 //!
-//! Planned work: frame-tagged types ([#8](https://github.com/MatthewK84/MJKPhysics/issues/8)) and SO(3) exponential and
-//! logarithm maps ([#9](https://github.com/MatthewK84/MJKPhysics/issues/9)). Conventions are fixed in [#5](https://github.com/MatthewK84/MJKPhysics/issues/5).
+//! - [`Vec3<F>`] — a vector resolved in frame `F`.
+//! - [`Mat3<F>`] — a linear operator on `Vec3<F>`, such as an inertia tensor.
+//! - [`Rotation<To, From>`] — maps `Vec3<From>` to `Vec3<To>`; `Rotation<World, Body>` is the
+//!   attitude $`\mathbf{q}_{WB}`$.
+//! - [`Quat`] and [`UnitQuat`] — Hamilton quaternions, scalar first, without frames.
+//!
+//! Frame markers are [`World`], [`Body`], [`Stability`] and [`Wind`]. Conventions follow the
+//! book's conventions page; code comments cite its equations, such as Eq. (CONV-8).
+//!
+//! Only `+ − × ÷` and `sqrt` are used, which IEEE 754 rounds exactly, so results are
+//! bit-identical on every platform. Transcendental functions arrive with the SO(3) maps (#9)
+//! and go through `libm`.
+
+mod eigen;
+mod frame;
+mod mat3;
+mod quat;
+mod rotation;
+mod vec3;
+
+pub use eigen::{JACOBI_TOLERANCE, MAX_JACOBI_SWEEPS, SymmetricEigen};
+pub use frame::{Body, Frame, Stability, Wind, World};
+pub use mat3::Mat3;
+pub use quat::{Quat, UnitQuat};
+pub use rotation::Rotation;
+pub use vec3::Vec3;
