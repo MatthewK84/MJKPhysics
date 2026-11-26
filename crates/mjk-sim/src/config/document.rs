@@ -29,7 +29,7 @@ impl DocumentKind {
 ///
 /// Checks, in order: TOML syntax, the header (`schema_version`, then `kind`), then the shape
 /// of the whole document, rejecting unknown fields. Physical plausibility is checked by each
-/// document type afterwards.
+/// document type afterward.
 pub(crate) fn parse_document<T: DeserializeOwned>(
     document: &str,
     text: &str,

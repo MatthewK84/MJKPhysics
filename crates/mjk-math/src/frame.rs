@@ -16,7 +16,7 @@ pub trait Frame: Copy + Clone + Debug + PartialEq + Eq + 'static {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct World;
 
-/// Body frame: Forward-Right-Down, fixed to the airframe at the centre of mass.
+/// Body frame: Forward-Right-Down, fixed to the airframe at the center of mass.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Body;
 

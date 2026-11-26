@@ -57,7 +57,7 @@ in this order, each stage reading only results from earlier stages:
 1. Environment: atmosphere and wind at each evaluation point.
 2. Sensors and controllers that are due on this tick, using sample-and-hold between their updates.
 3. Actuators: motors, ESCs and control surfaces respond to commands.
-4. Forces and moments: rotors, aerodynamics and gravity, summed about the centre of mass.
+4. Forces and moments: rotors, aerodynamics and gravity, summed about the center of mass.
 5. Integration of the rigid-body state ([ADR 0002](adr/0002-integrator-design.md)).
 6. Contact: collision detection and impulse resolution ([ADR 0003](adr/0003-contact-solver.md)).
 7. Logging and snapshot, written into preallocated buffers.

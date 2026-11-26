@@ -44,7 +44,7 @@ crates.
   generic types slow compilation and obscure error messages, and it doesn't route through `libm`
   by default.
 - **glam.** Fast and simple, but `f32`-first, without frame typing, and with its own precision
-  and SIMD behaviour that would complicate bit-exact determinism.
+  and SIMD behavior that would complicate bit-exact determinism.
 - **A units-of-measure crate (`uom`).** Compile-time units are attractive, but they add heavy
   generics throughout. Unit suffixes in names and frame types catch most errors at far lower cost.
 - **An existing physics engine (Rapier, others).** It would hide exactly the parts this project

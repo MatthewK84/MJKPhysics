@@ -225,7 +225,7 @@ const num = (n) => String(n);
 
 const ARM_M = 1.0;
 const ROTOR_R = 0.42;
-const DISC_Z = -0.13;
+const DISK_Z = -0.13;
 const GROUND_D = 1.95;
 /** PX4 quad-X order; azimuth measured from body x toward body y (clockwise seen from above). */
 const MOTORS = /** @type {readonly Motor[]} */ ([
@@ -525,7 +525,7 @@ function drawGround(svg, cam) {
   }
 }
 
-/** @param {Point} s @returns {string} a waypoint diamond centred on `s` */
+/** @param {Point} s @returns {string} a waypoint diamond centered on `s` */
 const diamondPath = (s) =>
   `M${num(s.x)} ${num(s.y - 7)} L${num(s.x + 7)} ${num(s.y)} ` +
   `L${num(s.x)} ${num(s.y + 7)} L${num(s.x - 7)} ${num(s.y)} Z`;
@@ -604,10 +604,10 @@ function drawArm(svg, toScreen, motor) {
 
 /** @param {Element} svg @param {ToScreen} toScreen @param {Motor} motor @returns {void} */
 function drawMotor(svg, toScreen, motor) {
-  const centre = polar(motor.azimuthDeg, ARM_M, 0);
+  const center = polar(motor.azimuthDeg, ARM_M, 0);
   /** @param {number} r @param {number} z @returns {Projected[]} */
   const ring = (r, z) =>
-    turn(36).map((a) => toScreen(add(centre, vec(r * Math.cos(a), r * Math.sin(a), z))));
+    turn(36).map((a) => toScreen(add(center, vec(r * Math.cos(a), r * Math.sin(a), z))));
   const outline = { stroke: COLOR.line };
   const can = pathOf(ring(0.095, -0.02), true);
   el(svg, 'path', { d: can, fill: COLOR.frameTop, ...outline, 'stroke-width': 1.3 });
@@ -630,10 +630,10 @@ function drawHub(svg, toScreen) {
 
 /** @param {Element} svg @param {ToScreen} toScreen @param {Motor} motor @returns {void} */
 function drawRotor(svg, toScreen, motor) {
-  const centre = polar(motor.azimuthDeg, ARM_M, DISC_Z);
+  const center = polar(motor.azimuthDeg, ARM_M, DISK_Z);
   /** @param {number} r @returns {Projected[]} */
   const circle = (r) =>
-    turn(72).map((a) => toScreen(add(centre, vec(r * Math.cos(a), r * Math.sin(a), 0))));
+    turn(72).map((a) => toScreen(add(center, vec(r * Math.cos(a), r * Math.sin(a), 0))));
   el(svg, 'path', {
     d: pathOf(circle(ROTOR_R), true),
     fill: 'rgba(94,225,255,0.075)',
@@ -649,23 +649,23 @@ function drawRotor(svg, toScreen, motor) {
       'stroke-dasharray': '3 5',
     });
   }
-  for (const offset of [0, 180]) drawBlade(svg, toScreen, centre, motor.bladeDeg + offset);
-  drawSpinArrow(svg, toScreen, centre, motor);
+  for (const offset of [0, 180]) drawBlade(svg, toScreen, center, motor.bladeDeg + offset);
+  drawSpinArrow(svg, toScreen, center, motor);
 }
 
 /**
  * Tapered blade outline lofted from a linear chord distribution.
- * @param {Element} svg @param {ToScreen} toScreen @param {Vec3} centre @param {number} azimuthDeg
+ * @param {Element} svg @param {ToScreen} toScreen @param {Vec3} center @param {number} azimuthDeg
  * @returns {void}
  */
-function drawBlade(svg, toScreen, centre, azimuthDeg) {
+function drawBlade(svg, toScreen, center, azimuthDeg) {
   const stations = [0.12, 0.35, 0.6, 0.85, 1.0];
   /** @param {number} f @returns {number} */
   const chordAt = (f) => 0.075 - 0.04 * f;
   /** @param {number} f @param {number} side @returns {Vec3} */
   const edge = (f, side) =>
     add(
-      add(centre, polar(azimuthDeg, ROTOR_R * f, 0)),
+      add(center, polar(azimuthDeg, ROTOR_R * f, 0)),
       polar(azimuthDeg + side, chordAt(f) * 0.5, 0),
     );
   const lead = stations.map((f) => edge(f, -90));
@@ -680,14 +680,14 @@ function drawBlade(svg, toScreen, centre, azimuthDeg) {
 }
 
 /**
- * @param {Element} svg @param {ToScreen} toScreen @param {Vec3} centre @param {Motor} motor
+ * @param {Element} svg @param {ToScreen} toScreen @param {Vec3} center @param {Motor} motor
  * @returns {void}
  */
-function drawSpinArrow(svg, toScreen, centre, motor) {
+function drawSpinArrow(svg, toScreen, center, motor) {
   const direction = motor.ccw ? -1 : 1;
   const start = motor.azimuthDeg - direction * 40;
   const angles = Array.from({ length: 17 }, (_, i) => start + direction * i * 5);
-  const pts = angles.map((a) => toScreen(add(centre, polar(a, ROTOR_R * 1.13, 0))));
+  const pts = angles.map((a) => toScreen(add(center, polar(a, ROTOR_R * 1.13, 0))));
   el(svg, 'path', {
     d: pathOf(pts, false),
     fill: 'none',
@@ -746,11 +746,11 @@ function drawWeightAndBodyZ(svg, rig) {
 /** @param {Element} svg @param {ToScreen} toScreen @returns {void} */
 function drawThrusts(svg, toScreen) {
   for (const m of MOTORS) {
-    const base = toScreen(polar(m.azimuthDeg, ARM_M, DISC_Z - 0.09));
-    const tip = toScreen(polar(m.azimuthDeg, ARM_M, DISC_Z - 0.09 - 0.85 * m.thrust));
+    const base = toScreen(polar(m.azimuthDeg, ARM_M, DISK_Z - 0.09));
+    const tip = toScreen(polar(m.azimuthDeg, ARM_M, DISK_Z - 0.09 - 0.85 * m.thrust));
     arrow(svg, base, tip, COLOR.thrust, { width: 2.6, head: 12 });
     label(svg, tip, `T_{${num(m.number)}}`, COLOR.thrust, { x: 8, y: 4 });
-    const tag = toScreen(polar(m.azimuthDeg, ARM_M + ROTOR_R * 1.38, DISC_Z));
+    const tag = toScreen(polar(m.azimuthDeg, ARM_M + ROTOR_R * 1.38, DISK_Z));
     const at = { x: tag.x - 5, y: tag.y + 5 };
     const style = { fill: COLOR.dim, family: MONO, size: 13, weight: 600 };
     textLine(svg, { ...at, ...style, text: String(m.number) });

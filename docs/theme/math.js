@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Renders GitHub-flavoured math in the mdBook output with KaTeX (ADR 0005).
+ * Renders GitHub-flavored math in the mdBook output with KaTeX (ADR 0005).
  *
  * Pages use the syntax GitHub renders natively, so they read correctly in both places:
  * - display equations are fenced code blocks with the language `math`;

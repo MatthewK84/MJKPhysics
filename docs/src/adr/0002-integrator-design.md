@@ -41,7 +41,7 @@ conservative. Contact is the only stiff part of the system.
 - **Adaptive step size (Dormand–Prince RK45 and similar).** Efficient for smooth problems, but
   controller sampling becomes irregular and runs are no longer reproducible across platforms.
 - **Symplectic and variational integrators (for example RATTLE).** Excellent long-term energy
-  behaviour for conservative systems, but the dominant forces here are dissipative, so the benefit
+  behavior for conservative systems, but the dominant forces here are dissipative, so the benefit
   is small.
 - **Implicit methods.** Only contact is stiff, and the impulse solver handles it. Implicit
   integration of the whole state would add cost and nonlinear solves without a matching benefit.

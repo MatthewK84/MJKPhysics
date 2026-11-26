@@ -1,6 +1,6 @@
 # Airframes
 
-Four aircraft are modelled, chosen for the quality of their public data. Each airframe file gives
+Four aircraft are modeled, chosen for the quality of their public data. Each airframe file gives
 every parameter a unit, a source and, where known, an uncertainty. Parameter pages will be
 generated from those files ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)), so the
 book can never disagree with what the simulator loads.

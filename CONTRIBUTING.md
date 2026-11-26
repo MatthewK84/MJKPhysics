@@ -137,7 +137,7 @@ syntax trees with `syn`'s visitor, which recurses with the depth of the source's
 ### Mutation testing
 
 A mutant is a small change to the code, such as `<` to `<=` or `+` to `-`. If every test still
-passes, the tests do not pin that behaviour. Mutation testing runs on the lines each change
+passes, the tests do not pin that behavior. Mutation testing runs on the lines each change
 touches, and every week on the whole engine; xtask and the two front-end crates are excluded
 (`.cargo/mutants.toml`).
 
@@ -150,7 +150,7 @@ line number.
 ### Supply chain
 
 `deny.toml` fails the build on any RustSec advisory (vulnerable, unmaintained or unsound), a
-yanked crate, a licence outside MIT, Apache-2.0 and Unicode-3.0, two versions of one crate, a
+yanked crate, a license outside MIT, Apache-2.0 and Unicode-3.0, two versions of one crate, a
 wildcard version or a source other than crates.io. Changing the policy is a reviewed change to
 that file.
 

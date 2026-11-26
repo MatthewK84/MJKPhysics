@@ -13,14 +13,14 @@ every parameter, and how the implementation was checked.
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 
-## How the book is organised
+## How the book is organized
 
 - **Foundations.** [Conventions and notation](conventions.md) fixes frames, rotation conventions,
   signs, units and symbols; everything else uses them. [Architecture](architecture.md) describes
   the crates, their layering and the rules the engine follows.
 - **Physics.** [Models](models/README.md) has one page per physical model.
   [Validation](validation/README.md) collects the evidence that each model is implemented
-  correctly. [Airframes](airframes/README.md) documents the four modelled aircraft and the source
+  correctly. [Airframes](airframes/README.md) documents the four modeled aircraft and the source
   of every parameter.
 - **Project.** [Decision records](adr/README.md) explain significant design choices and the
   alternatives that were rejected. [Engineering standards](engineering-standards.md) gives the

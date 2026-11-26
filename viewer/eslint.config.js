@@ -93,7 +93,7 @@ export default defineConfig(
   },
   {
     // JavaScript files declare parameter and return types in JSDoc, which `tsc --checkJs`
-    // enforces; these two rules only recognise TypeScript annotations. tsc also reports
+    // enforces; these two rules only recognize TypeScript annotations. tsc also reports
     // undefined names, with knowledge of each file's environment (browser or Node).
     files: ['**/*.js', '**/*.mjs'],
     rules: {

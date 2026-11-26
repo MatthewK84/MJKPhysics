@@ -6,10 +6,10 @@
 use std::fmt;
 
 /// Relative tolerance for symmetry and for the semidefiniteness test, scaled by the largest
-/// tensor entry. It absorbs rounding in published or computed tensors, not modelling error.
+/// tensor entry. It absorbs rounding in published or computed tensors, not modeling error.
 pub const RELATIVE_TOLERANCE: f64 = 1e-9;
 
-/// Why a tensor cannot be the inertia of a rigid body about its centre of mass.
+/// Why a tensor cannot be the inertia of a rigid body about its center of mass.
 #[derive(Clone, Copy, Debug)]
 pub enum InertiaProblem {
     /// Entry `[row][col]` is NaN or infinite.
@@ -71,7 +71,7 @@ impl fmt::Display for InertiaProblem {
     }
 }
 
-/// Checks that `j` (kg·m², about the centre of mass) can be the inertia of a rigid body.
+/// Checks that `j` (kg·m², about the center of mass) can be the inertia of a rigid body.
 ///
 /// A symmetric tensor is the inertia of some mass distribution exactly when the second-moment
 /// matrix `S = ½·tr(J)·I − J` is positive semidefinite, which is equivalent to the triangle

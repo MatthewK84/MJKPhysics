@@ -48,7 +48,7 @@ fixed-wing aircraft.
 - [Documentation](#documentation)
 - [Why this exists](#why-this-exists)
 - [Design principles](#design-principles)
-- [What is modelled](#what-is-modelled)
+- [What is modeled](#what-is-modeled)
 - [Airframes](#airframes)
 - [Conventions](#conventions)
 - [How correctness is shown](#how-correctness-is-shown)
@@ -58,7 +58,7 @@ fixed-wing aircraft.
 - [Getting started](#getting-started)
 - [Contributing](#contributing)
 - [References](#references)
-- [Acknowledgements and trademarks](#acknowledgements-and-trademarks)
+- [Acknowledgments and trademarks](#acknowledgments-and-trademarks)
 - [License](#license)
 
 ## Documentation
@@ -91,7 +91,7 @@ to a source. MJKPhysics sits between the two:
 2. **Every model states its assumptions, its validity range and its sources.** Parameters carry a
    unit, a citation and an uncertainty. Leaving a validity range is reported, never silently clamped.
 3. **Fidelity is a ladder.** Each subsystem offers selectable tiers, from `T = k·ω²` up to BEMT with
-   blade flapping, so the effect of each modelling choice can be shown side by side.
+   blade flapping, so the effect of each modeling choice can be shown side by side.
 4. **Deterministic.** The same scenario, inputs and seed produce an identical state hash on every
    run, natively and in WebAssembly. Recorded flights replay bit for bit.
 5. **Rendering never feeds back into physics.** The viewer reads snapshots; nothing it does can
@@ -101,7 +101,7 @@ to a source. MJKPhysics sits between the two:
    graph), bounded loops, short functions, no `unsafe`, no panicking shortcuts. The tests are
    tested in turn: every change is mutation-tested, and a surviving mutant fails the build.
 
-## What is modelled
+## What is modeled
 
 | Subsystem | Model | Fidelity tiers | Roadmap |
 |---|---|---|---|
@@ -217,7 +217,7 @@ The viewer aims for the look of a modern game engine while staying honest to the
 - Procedural airframes generated from the same files that drive the physics, including propeller
   blades lofted from the BEMT chord and twist distributions.
 - **Rotor blur computed, not faked:** when a rotor turns more than one blade spacing during the
-  exposure, it is drawn as a disc whose opacity at each radius equals the blade coverage `N·c(r)/(2πr)`.
+  exposure, it is drawn as a disk whose opacity at each radius equals the blade coverage `N·c(r)/(2πr)`.
 - Real-world terrain from public elevation models, vegetation that moves with the simulated wind,
   downwash dust driven by momentum-theory induced velocity, and rotor audio at the simulated
   blade-passing frequency.
@@ -320,7 +320,7 @@ Core texts and papers the models are built on; each issue and model page cites i
 - J. Förster, "System Identification of the Crazyflie 2.0 Nano Quadrocopter," B.Sc. thesis, ETH Zurich, 2015.
 - K. Gryte et al., "Aerodynamic modeling of the Skywalker X8 fixed-wing unmanned aerial vehicle," ICUAS, 2018.
 
-## Acknowledgements and trademarks
+## Acknowledgments and trademarks
 
 The airframe models depend on data published by Bitcraze and ETH Zurich (Crazyflie), the PX4
 project and Holybro (X500), the BYU MAGICC Lab (Aerosonde reference code), NTNU (Skywalker X8) and
@@ -328,7 +328,7 @@ the UIUC Propeller Data Site. Thank you for making it public.
 
 Crazyflie is a trademark of Bitcraze AB. Holybro, PX4, ArduPilot, Aerosonde and Skywalker are
 trademarks of their respective owners. Names are used only to identify the aircraft and software
-being modelled; this project is not affiliated with or endorsed by any of them, and no
+being modeled; this project is not affiliated with or endorsed by any of them, and no
 manufacturer artwork or logos are used.
 
 ## License

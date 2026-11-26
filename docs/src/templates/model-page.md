@@ -16,7 +16,7 @@ What the model computes, what it is for, and which fidelity tier it belongs to.
 
 ## Assumptions
 
-Numbered, specific and checkable, for example: "Inflow is uniform across the disc."
+Numbered, specific and checkable, for example: "Inflow is uniform across the disk."
 
 ## Equations
 

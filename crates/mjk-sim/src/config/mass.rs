@@ -1,4 +1,4 @@
-//! The `[mass]` table: mass, centre of mass and inertia tensor.
+//! The `[mass]` table: mass, center of mass and inertia tensor.
 
 use mjk_core::{EngineError, FieldPath};
 use mjk_dynamics::mass::{InertiaProblem, check_inertia};
@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 pub struct MassConfig {
     /// Total mass.
     pub mass_kg: f64,
-    /// Centre of mass relative to the airframe reference point, body axes.
+    /// Center of mass relative to the airframe reference point, body axes.
     pub cg_m: [f64; 3],
-    /// Inertia tensor about the centre of mass, body axes; `inertia_kg_m2[row][col]`.
+    /// Inertia tensor about the center of mass, body axes; `inertia_kg_m2[row][col]`.
     pub inertia_kg_m2: [[f64; 3]; 3],
 }
 

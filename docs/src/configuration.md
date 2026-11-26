@@ -60,8 +60,8 @@ name = "Example quadrotor"
 
 [mass]
 mass_kg = 1.5
-cg_m = [0.0, 0.0, 0.01]           # centre of mass from the reference point, body axes
-inertia_kg_m2 = [                 # about the centre of mass, body axes
+cg_m = [0.0, 0.0, 0.01]           # center of mass from the reference point, body axes
+inertia_kg_m2 = [                 # about the center of mass, body axes
   [0.0290, 0.0000, 0.0004],
   [0.0000, 0.0300, 0.0000],
   [0.0004, 0.0000, 0.0550],

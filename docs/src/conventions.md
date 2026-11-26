@@ -35,9 +35,9 @@ type, as in `Vec3<Body>` and `Vec3<World>`; the attitude is a `Rotation<World, B
 | Frame | Symbol | Code marker | Origin | Axes |
 |---|---|---|---|---|
 | World | $`W`$ | `World` | Scenario reference point on the ground | **North, East, Down** (local level) |
-| Body | $`B`$ | `Body` | Vehicle centre of mass | **Forward, Right, Down** |
-| Stability | $`S`$ | `Stability` | Centre of mass | $`\mathbf{x}_S`$ along the relative wind projected onto the body $`x`$–$`z`$ plane; $`\mathbf{y}_S = \mathbf{y}_B`$ |
-| Wind (air-relative) | $`A`$ | `Wind` | Centre of mass | $`\mathbf{x}_A`$ along the relative wind; $`\mathbf{z}_A`$ in the body plane of symmetry |
+| Body | $`B`$ | `Body` | Vehicle center of mass | **Forward, Right, Down** |
+| Stability | $`S`$ | `Stability` | Center of mass | $`\mathbf{x}_S`$ along the relative wind projected onto the body $`x`$–$`z`$ plane; $`\mathbf{y}_S = \mathbf{y}_B`$ |
+| Wind (air-relative) | $`A`$ | `Wind` | Center of mass | $`\mathbf{x}_A`$ along the relative wind; $`\mathbf{z}_A`$ in the body plane of symmetry |
 | Render | $`\mathcal{R}`$ | viewer only | Same as $`W`$ | East, Up, South (Y-up, right-handed) |
 
 The wind axes are written $`A`$, not $`W`$, so they cannot be confused with the world frame. All
@@ -69,7 +69,7 @@ the position.
 
 ### 2.2 Body frame
 
-The body frame is fixed to the airframe with its origin at the centre of mass: $`\mathbf{x}_B`$ out
+The body frame is fixed to the airframe with its origin at the center of mass: $`\mathbf{x}_B`$ out
 of the nose, $`\mathbf{y}_B`$ out of the right side, $`\mathbf{z}_B`$ down. For a multirotor, "nose" is
 the forward direction declared in the airframe file; for the quad-X layout it bisects motors 1
 and 3 (section 6).
@@ -102,7 +102,7 @@ airspeed $`V_a = \lVert \mathbf{v}_a \rVert`$:
 
 Positive $`\alpha`$ means the relative wind meets the aircraft from below. Positive $`\beta`$ means it
 meets the aircraft from the right. Both angles are undefined as $`V_a \to 0`$; models that use them
-must define their behaviour below a stated airspeed
+must define their behavior below a stated airspeed
 ([#44](https://github.com/MatthewK84/MJKPhysics/issues/44)).
 
 ### 2.4 Render frame
@@ -258,7 +258,7 @@ Lift and drag are defined in stability axes and side force in body axes, as in B
 Stevens, Lewis & Johnson define drag along the wind axis $`-\mathbf{x}_A`$. The two definitions
 differ at order $`\beta`$, and each model page states which one its source uses.
 
-Coefficients are nondimensionalised by the dynamic pressure $`\bar{q} = \tfrac12\rho V_a^2`$, the
+Coefficients are nondimensionalized by the dynamic pressure $`\bar{q} = \tfrac12\rho V_a^2`$, the
 reference area $`S`$, the span $`b`$ (roll and yaw) and the mean aerodynamic chord $`\bar{c}`$ (pitch).
 Rates enter as $`\tfrac{pb}{2V_a}`$, $`\tfrac{q\bar{c}}{2V_a}`$ and $`\tfrac{rb}{2V_a}`$.
 
@@ -293,7 +293,7 @@ pressure $`P`$ in pascals, density $`\rho`$ in kg/m³, speed of sound $`a`$, dyn
 
 ## 6. Rotors and propellers
 
-- **Geometry.** Each rotor $`i`$ has a hub position $`\mathbf{r}_i^B`$ relative to the centre of mass
+- **Geometry.** Each rotor $`i`$ has a hub position $`\mathbf{r}_i^B`$ relative to the center of mass
   and a unit thrust axis $`\mathbf{n}_i^B`$; for a flat multirotor, $`\mathbf{n}_i^B = -\mathbf{z}_B`$.
 - **Speed.** $`\omega_i \ge 0`$ is the rotor's speed magnitude in rad/s. RPM appears only in input
   and output (`_rpm` suffix).
@@ -318,9 +318,9 @@ To yaw right, speed up the counter-clockwise rotors.
 
 ### 6.1 Propeller and rotor coefficients
 
-Two nondimensionalisations are in common use, and they differ by large constant factors. Propeller
+Two nondimensionalizations are in common use, and they differ by large constant factors. Propeller
 data (UIUC Propeller Data Site; Brandt & Selig) uses revolutions per second $`n`$ and diameter $`D`$,
-with disc area $`A = \pi R^2`$; rotorcraft theory (Leishman) uses $`\Omega`$ and radius $`R`$.
+with disk area $`A = \pi R^2`$; rotorcraft theory (Leishman) uses $`\Omega`$ and radius $`R`$.
 (CONV-16) converts between the two.
 
 ```math
@@ -349,8 +349,8 @@ bare `ct`.
 
   | Suffix | Unit | Suffix | Unit |
   |---|---|---|---|
-  | `_m` | metre | `_n` | newton |
-  | `_m_s` | m/s | `_n_m` | newton-metre |
+  | `_m` | meter | `_n` | newton |
+  | `_m_s` | m/s | `_n_m` | newton-meter |
   | `_m_s2` | m/s² | `_pa` | pascal |
   | `_rad` | radian | `_k` | kelvin |
   | `_rad_s` | rad/s | `_v` | volt |
@@ -381,8 +381,8 @@ and the renderer.
 
 | Symbol | Meaning | Unit | Code |
 |---|---|---|---|
-| $`\mathbf{p}^W = (p_N, p_E, p_D)`$ | Position of the centre of mass | m | `position_m: Vec3<World>` |
-| $`\mathbf{v}^W`$ | Velocity of the centre of mass relative to $`W`$ | m/s | `velocity_m_s: Vec3<World>` |
+| $`\mathbf{p}^W = (p_N, p_E, p_D)`$ | Position of the center of mass | m | `position_m: Vec3<World>` |
+| $`\mathbf{v}^W`$ | Velocity of the center of mass relative to $`W`$ | m/s | `velocity_m_s: Vec3<World>` |
 | $`\mathbf{q}_{WB}`$ | Attitude, body to world | — | `q_wb: UnitQuat` |
 | $`\boldsymbol{\omega}^B = (p, q, r)`$ | Body angular velocity relative to $`W`$, in body axes | rad/s | `omega_rad_s: Vec3<Body>` |
 | $`\mathbf{v}_{\text{wind}}^W`$ | Wind velocity | m/s | `wind_m_s: Vec3<World>` |
@@ -391,8 +391,8 @@ and the renderer.
 | $`\alpha`$, $`\beta`$ | Angle of attack, sideslip (CONV-2) | rad | `alpha_rad`, `beta_rad` |
 | $`\psi, \theta, \phi`$ | Yaw, pitch, roll (I/O only) | rad | `yaw_rad`, `pitch_rad`, `roll_rad` |
 | $`m`$ | Mass | kg | `mass_kg` |
-| $`\mathbf{J}^B`$ | Inertia tensor about the centre of mass, body axes | kg·m² | `inertia_kg_m2: Mat3` |
-| $`\mathbf{F}`$, $`\mathbf{M} = (M_x, M_y, M_z)`$ | Force; moment about the centre of mass | N, N·m | `Wrench<F>` |
+| $`\mathbf{J}^B`$ | Inertia tensor about the center of mass, body axes | kg·m² | `inertia_kg_m2: Mat3` |
+| $`\mathbf{F}`$, $`\mathbf{M} = (M_x, M_y, M_z)`$ | Force; moment about the center of mass | N, N·m | `Wrench<F>` |
 | $`L`$, $`D`$, $`Y`$ | Lift, drag, side force | N | `lift_n`, `drag_n`, `side_force_n` |
 | $`C_L, C_D, C_Y, C_l, C_m, C_n`$ | Force and moment coefficients | — | `c_lift`, `c_drag`, … |
 | $`\bar{q} = \tfrac12\rho V_a^2`$ | Dynamic pressure | Pa | `dynamic_pressure_pa` |

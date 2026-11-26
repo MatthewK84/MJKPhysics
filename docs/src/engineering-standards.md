@@ -30,7 +30,7 @@ failure modes can be checked by a tool rather than trusted.
 | 7 | Check every return value | `unused_must_use`, `let_underscore_must_use`, `let_underscore_untyped`; no `unwrap`, `expect` or `panic!` |
 | 8 | Limited preprocessor | No `macro_rules!`, no conditional compilation outside tests; serde's derive is the only procedural macro in the engine |
 | 9 | Restricted pointers | `unsafe` forbidden; no `dyn` trait objects or function pointer types |
-| 10 | All warnings on, analysed daily | `-D warnings`, Clippy `pedantic`, the gates below, daily CI |
+| 10 | All warnings on, analyzed daily | `-D warnings`, Clippy `pedantic`, the gates below, daily CI |
 
 Rules 2, 8 and 9 and the assertion report come from `cargo xtask standards`, which parses every
 crate's source with `syn`. Test code is exempt from them.
@@ -77,7 +77,7 @@ Passing tests show that the code does what the tests check. Two gates measure ho
   not whether any test would notice if they were wrong.
 - **Mutation testing** answers that. `cargo-mutants` makes small changes to the code, one at a
   time: `<` to `<=`, `+` to `-`, a function body replaced by a default value. If every test
-  still passes, the mutant has survived, and the tests do not pin that behaviour. CI mutates
+  still passes, the mutant has survived, and the tests do not pin that behavior. CI mutates
   the lines each change touches, and any survivor fails it. A weekly run mutates the whole engine.
 
 ### What mutation testing found
@@ -131,7 +131,7 @@ $`(2/q_0)(1 - n^2/3)`$, which has the same truncation order and no equivalent mu
 ## Supply chain
 
 - **Rust.** `cargo-deny` fails the build on any RustSec advisory (vulnerable, unmaintained or
-  unsound crates), a yanked crate, a licence outside MIT, Apache-2.0 and Unicode-3.0, two versions
+  unsound crates), a yanked crate, a license outside MIT, Apache-2.0 and Unicode-3.0, two versions
   of one crate, a wildcard version, or a source other than crates.io. Engine crates may depend on
   only four external crates (`libm`, `serde`, `serde_path_to_error`, `toml`), enforced by the
   layering check.
