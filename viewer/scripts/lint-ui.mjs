@@ -30,6 +30,12 @@ const RULES = [
   { name: 'border radius in relative units', pattern: /border-radius\s*:[^;]*\d(?:rem|em|%)/ },
   { name: 'rounded utility', pattern: /\brounded-(?:md|lg|xl|2xl|3xl)\b/ },
   { name: 'shadow utility', pattern: /\bshadow-(?:md|lg|xl|2xl)\b/ },
+  {
+    // Shadows belong only on floating layers (menus, popovers, dialogs), through a token.
+    name: 'shadow outside a token',
+    pattern: /box-shadow\s*:(?!\s*(?:none\b|var\())|drop-shadow\(/,
+    exceptIn: TOKEN_FILE,
+  },
   { name: 'purple-family utility', pattern: /\b(?:indigo|violet|purple|fuchsia)-\d{2,3}\b/ },
   {
     name: 'purple-family named color',

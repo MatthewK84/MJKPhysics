@@ -29,7 +29,8 @@ request.
 The exact allowed edges are the rule table in `xtask/src/layering.rs`. Engine crates, everything
 from `mjk-core` to `mjk-sim`, may use only `libm`, `serde`, `serde_path_to_error` and `toml` as
 external dependencies outside of tests ([ADR 0001](adr/0001-hand-written-math.md),
-[ADR 0006](adr/0006-errors-and-configuration.md)).
+[ADR 0006](adr/0006-errors-and-configuration.md)). The coding rules every crate follows, and how
+CI enforces them, are on the [Engineering standards](engineering-standards.md) page.
 
 ## Rules the engine follows
 

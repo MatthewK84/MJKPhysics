@@ -46,6 +46,7 @@ export default defineConfig(
       'no-implied-eval': 'off',
       '@typescript-eslint/no-implied-eval': 'error',
       'no-restricted-globals': ['error', 'event', 'fdescribe'],
+      'prefer-rest-params': 'error',
       'no-restricted-properties': [
         'error',
         { object: 'document', property: 'write', message: 'document.write is banned.' },
@@ -74,6 +75,10 @@ export default defineConfig(
       // 8. Explicit data declarations.
       '@typescript-eslint/explicit-function-return-type': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/consistent-type-assertions': [
+        'error',
+        { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' },
+      ],
       // 9. Consistent error handling; no floating promises.
       'no-throw-literal': 'off',
       '@typescript-eslint/only-throw-error': 'error',

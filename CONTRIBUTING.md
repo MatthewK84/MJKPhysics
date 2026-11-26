@@ -180,20 +180,20 @@ JavaScript files use `// @ts-check` with JSDoc types and are type-checked with `
 |---|---|---|
 | 1 | Early returns and shallow control flow | `max-depth` 3, `complexity` 10, `no-else-return` |
 | 2 | No global state; don't mutate inputs | `no-restricted-syntax` (assigning to `window`/`globalThis`), `no-param-reassign` |
-| 3 | No legacy or unsafe features: `eval`, `with`, `document.write`, `any`, non-null `!`, `@ts-ignore` | `no-eval`, `no-implied-eval`, `no-new-func`, `no-with`, `no-restricted-properties`, `no-explicit-any`, `no-non-null-assertion`, `ban-ts-comment`; `lint:ui` also catches `any` in JSDoc |
+| 3 | No legacy or unsafe features: `eval`, `with`, `arguments`, `document.write`, `any`, non-null `!`, `@ts-ignore` | `no-eval`, `no-implied-eval`, `no-new-func`, `no-with`, `prefer-rest-params`, `no-restricted-properties`, `no-restricted-globals`, `no-explicit-any`, `no-non-null-assertion`, `ban-ts-comment`; `lint:ui` also catches `any` in JSDoc |
 | 4 | Block scoping: `const` by default, never `var`; no shadowing | `no-var`, `prefer-const`, `no-shadow`, `block-scoped-var` |
 | 5 | Static analysis without suppressions | ESLint, Prettier and `tsc` in CI; inline `eslint-disable` comments are ignored and reported (`noInlineConfig`) |
 | 6 | No deep recursion | Review: ESLint has no rule for call cycles |
 | 7 | Small, pure functions | `max-lines-per-function` 50 |
-| 8 | Explicit data shapes and signatures | `explicit-function-return-type`, `explicit-module-boundary-types` in TypeScript; in JavaScript, JSDoc `@param` and `@returns` checked by `tsc --checkJs`, with review for missing `@returns` |
+| 8 | Explicit data shapes and signatures | `explicit-function-return-type`, `explicit-module-boundary-types` in TypeScript, and `consistent-type-assertions` (annotate object literals rather than assert them); in JavaScript, JSDoc `@param` and `@returns` checked by `tsc --checkJs`, with review for missing `@returns` |
 | 9 | Consistent async error handling; no floating promises | `no-floating-promises`, `no-misused-promises`, `only-throw-error`, `prefer-promise-reject-errors` |
 | 10 | Never modify built-in prototypes | `no-extend-native`, `no-prototype-builtins` |
 
 ### Interface standard
 
 Interface code follows [ADR 0007](docs/src/adr/0007-interface-standard.md): tokens from one file,
-no gradients, blur, radius above 4 px, decorative color, emoji or slow motion, and self-hosted
-assets. `npm run lint:ui` scans `viewer/src` and `docs/theme` and must report nothing. The
+no gradients, blur, radius above 4 px, shadows outside a token (for floating layers only),
+decorative color, emoji or slow motion, and self-hosted assets. `npm run lint:ui` scans `viewer/src` and `docs/theme` and must report nothing. The
 rendered 3D scene and the README hero are exempt.
 
 ### Python (planned)

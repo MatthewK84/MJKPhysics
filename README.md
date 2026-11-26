@@ -12,7 +12,9 @@
 
 <p align="center">
   <a href="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://github.com/MatthewK84/MJKPhysics/issues/1"><img alt="Roadmap: 84 issues" src="https://img.shields.io/badge/roadmap-84%20issues-5ee1ff"></a>
+  <a href="https://matthewk84.github.io/MJKPhysics/"><img alt="Docs" src="https://github.com/MatthewK84/MJKPhysics/actions/workflows/docs.yml/badge.svg?branch=main"></a>
+  <a href="https://matthewk84.github.io/MJKPhysics/engineering-standards.html"><img alt="Standards: Power of Ten, mutation-tested" src="https://img.shields.io/badge/standards-Power%20of%20Ten%20%C2%B7%20mutation--tested-b79bff"></a>
+  <a href="https://github.com/MatthewK84/MJKPhysics/issues/1"><img alt="Roadmap: 85 issues" src="https://img.shields.io/badge/roadmap-85%20issues-5ee1ff"></a>
   <img alt="Status: pre-alpha" src="https://img.shields.io/badge/status-pre--alpha-ffb547">
   <img alt="Rust 1.97" src="https://img.shields.io/badge/rust-1.97-cfe0ff">
   <a href="#license"><img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-7cf29c"></a>
@@ -31,8 +33,12 @@ It targets four small unmanned aircraft with public, well-documented data: two q
 fixed-wing aircraft.
 
 > [!NOTE]
-> **Status: pre-alpha, design stage.** The architecture, conventions and an 84-issue roadmap are in
-> place; engine code starts with [M0 · Foundation](https://github.com/MatthewK84/MJKPhysics/milestone/1).
+> **Status: pre-alpha.** [M0 · Foundation](https://github.com/MatthewK84/MJKPhysics/milestone/1) is
+> complete: workspace and layering, CI enforcing the
+> [engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html),
+> the engineering book, and the error and configuration model.
+> [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
+> frame-typed math and the SO(3) maps are done, and rigid-body dynamics is next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.
@@ -90,6 +96,10 @@ to a source. MJKPhysics sits between the two:
    run, natively and in WebAssembly. Recorded flights replay bit for bit.
 5. **Rendering never feeds back into physics.** The viewer reads snapshots; nothing it does can
    change a simulated result.
+6. **Checked by tools, not trust.** The code follows NASA/JPL's Power of Ten rules, adapted to
+   Rust and TypeScript, and CI enforces each one it can: no recursion (found in the compiled call
+   graph), bounded loops, short functions, no `unsafe`, no panicking shortcuts. The tests are
+   tested in turn: every change is mutation-tested, and a surviving mutant fails the build.
 
 ## What is modelled
 
@@ -152,6 +162,12 @@ result and known limitations of each check ([#81](https://github.com/MatthewK84/
 4. **Statistical checks:** turbulence power spectra against the Dryden PSD, and IMU noise recovered
    from Allan deviation plots.
 
+The tests are checked too. Engine line coverage must stay at or above 90 %, and mutation testing
+changes the code in small ways and fails CI if any change goes unnoticed by every test; no mutant
+of the engine survives. The
+[Engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html) page
+explains what that process found.
+
 Every issue shares one definition of done, kept in the tracking issue
 ([#1](https://github.com/MatthewK84/MJKPhysics/issues/1)): lint-clean, no `unsafe` in engine crates,
 no heap allocation in the step loop, a docs page with numbered equations, and at least one test
@@ -210,13 +226,13 @@ The viewer aims for the look of a modern game engine while staying honest to the
 
 ## Roadmap
 
-The full plan is 84 issues across nine milestones, tracked in
+The full plan is 85 issues across nine milestones, tracked in
 [#1](https://github.com/MatthewK84/MJKPhysics/issues/1). Each issue lists its scope, acceptance
 criteria, references and dependencies.
 
 | Milestone | Delivers | Issues |
 |---|---|---|
-| [M0 · Foundation](https://github.com/MatthewK84/MJKPhysics/milestone/1) | Workspace, lint policy, CI, conventions, docs site, config loading | 6 |
+| [M0 · Foundation](https://github.com/MatthewK84/MJKPhysics/milestone/1) | Workspace, lint policy, CI, conventions, docs site, config loading, engineering standards enforced in CI | 7 |
 | [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) | Frame-typed math, rigid body, four integrators, deterministic loop, analytic validation | 10 |
 | [M2 · Multirotor](https://github.com/MatthewK84/MJKPhysics/milestone/3) | Motor, ESC and battery; BEMT rotors with forward-flight effects; allocation; two controllers; Crazyflie and X500 | 14 |
 | [M3 · Renderer foundation](https://github.com/MatthewK84/MJKPhysics/milestone/4) | WebAssembly build, browser viewer, lighting and shadows, rotor blur, piloting, HUD | 11 |
@@ -230,7 +246,8 @@ M3 is the first milestone where you can fly a validated quadrotor in the browser
 
 ## Getting started
 
-The workspace builds, but the crates are scaffolding: physics arrives with
+The math foundation (frame-typed linear algebra, quaternions and the SO(3) maps) is in place; the
+physics arrives with the rest of
 [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2). You need
 [rustup](https://rustup.rs); the toolchain, components and WebAssembly target are pinned in
 `rust-toolchain.toml`.
@@ -247,11 +264,13 @@ rustup toolchain install
 cargo build --workspace && cargo test --workspace
 ```
 
-Check that every crate only depends on what its layer allows:
+Check crate layering, equation citations and the Power of Ten rules:
 
 ```bash
-cargo xtask layering
+cargo xtask layering && cargo xtask equations && cargo xtask standards
 ```
+
+[CONTRIBUTING.md](CONTRIBUTING.md) lists the full set of checks CI runs, with the commands.
 
 ### Repository layout
 
@@ -268,7 +287,9 @@ crates/
   mjk-sim        world composition, airframes, scenarios
   mjk-cli        the `mjk` command-line tool
   mjk-wasm       WebAssembly bindings for the browser viewer
-xtask/           repository automation (`cargo xtask layering`)
+xtask/           repository automation (`cargo xtask layering | equations | standards`)
+docs/            the engineering book (mdBook)
+viewer/          browser viewer (TypeScript), and the lint policy shared by all scripts
 assets/readme/   source and render script for the README illustration
 ```
 
@@ -278,8 +299,9 @@ Issues are written to be picked up independently: each one has a scope, checkbox
 criteria, references and links to the issues it depends on. Labels group them by area
 (`area:aero`, `area:contact`, `area:render`, …) and by kind (`kind:validation`, `kind:infra`).
 Before starting, read the principles and definition of done in
-[#1](https://github.com/MatthewK84/MJKPhysics/issues/1). A full `CONTRIBUTING.md` arrives with
-[#3](https://github.com/MatthewK84/MJKPhysics/issues/3).
+[#1](https://github.com/MatthewK84/MJKPhysics/issues/1), and
+[CONTRIBUTING.md](CONTRIBUTING.md) for the workflow, the checks to run locally and how CI enforces
+each coding rule.
 
 ## References
 

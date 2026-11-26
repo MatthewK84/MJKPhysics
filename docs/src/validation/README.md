@@ -22,3 +22,26 @@ produced them. The first results arrive with the analytic suite
 ([#16](https://github.com/MatthewK84/MJKPhysics/issues/16)) and the command-line tool
 ([#17](https://github.com/MatthewK84/MJKPhysics/issues/17)). The full report is
 [#81](https://github.com/MatthewK84/MJKPhysics/issues/81).
+
+## Verified so far
+
+The model checks above begin with the rigid-body core. The foundations they rest on are already
+tested, each property over hundreds of random inputs and each edge case deterministically:
+
+| Component | What is checked |
+|---|---|
+| [Frame-typed math](../math-types.md) ([#8](https://github.com/MatthewK84/MJKPhysics/issues/8)) | Rotations preserve norms; a quaternion times its inverse is the identity; quaternion composition matches the matrix product; transpose, determinant, inverse and symmetric eigen-decomposition identities; exact results of the elementary operators; eigen-decomposition accuracy independent of scale and of off-diagonal patterns |
+| [SO(3) maps](../so3.md) ([#9](https://github.com/MatthewK84/MJKPhysics/issues/9)) | Log inverts Exp for angles from $`10^{-12}`$ rad to just under $`\pi`$; Exp inverts Log and takes the short way; Jacobian identities, and the right Jacobian linearizes Exp; plus and minus invert each other; slerp moves at constant rate; Euler angles round-trip, including at gimbal lock; matrix conversion round-trips and non-rotations are rejected; Jacobian coefficients agree with 40-digit references; the small-angle branches of Exp and Log are accurate to within 2 and 4 ulp |
+| Inertia consistency ([#7](https://github.com/MatthewK84/MJKPhysics/issues/7)) | Non-finite, asymmetric, indefinite and triangle-inequality-violating tensors are rejected, with each principal minor and its tolerance pinned by a case only it can detect ([Engineering standards](../engineering-standards.md#what-mutation-testing-found)) |
+| [Configuration files](../configuration.md) ([#7](https://github.com/MatthewK84/MJKPhysics/issues/7)) | Each of 14 malformed sample files produces an error naming the exact field at fault |
+
+These are unit and property tests, and their tolerances are stated in the tests. The generated
+report ([#81](https://github.com/MatthewK84/MJKPhysics/issues/81)) will tabulate model checks in
+the format above.
+
+## How the tests are checked
+
+Two gates in CI measure the tests themselves. Engine line coverage must stay at or above 90 %.
+Mutation testing changes the code in small ways and fails if any change goes unnoticed by every
+test; no mutant of the engine survives. Both are described on the
+[Engineering standards](../engineering-standards.md#testing-the-tests) page.

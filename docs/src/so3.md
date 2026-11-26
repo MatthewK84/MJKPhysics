@@ -54,7 +54,7 @@ Each ratio is evaluated in the form that keeps full precision.
 | Quantity | Problem with the closed form | What the code does |
 |---|---|---|
 | $`\sin(\theta/2)/\theta`$ | 0/0 at $`\theta = 0`$ only | Series below $`10^{-3}`$ rad; closed form above |
-| $`2\,\mathrm{atan2}(n, q_0)/n`$ | 0/0 at $`n = 0`$ only | Series below $`n = 10^{-6}`$ |
+| $`2\,\mathrm{atan2}(n, q_0)/n`$ | 0/0 at $`n = 0`$ only | Below $`n = 10^{-6}`$, the series $`(2/q_0)(1 - n^2/3)`$; since $`q_0^2 = 1 - n^2`$, the omitted terms are $`O(n^4)`$, under $`10^{-24}`$ |
 | $`(1-\cos\theta)/\theta^2`$ | Cancellation: loses about $`2\varepsilon/\theta^2`$ | Computed as $`2\,(\sin(\theta/2)/\theta)^2`$, with no cancellation anywhere |
 | $`(\theta-\sin\theta)/\theta^3`$ | Cancellation: loses about $`6\varepsilon/\theta^2`$, about 9 digits at $`\theta = 10^{-3}`$ | 8-term series below 1 rad |
 | $`1/\theta^2 - \cot(\theta/2)/(2\theta)`$ | Cancellation: loses about $`12\varepsilon/\theta^2`$ | 11-term series below 1 rad ($`B_{2n}`$ are the Bernoulli numbers) |

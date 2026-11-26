@@ -111,8 +111,9 @@ impl UnitQuat {
         let q = if q.w < 0.0 { -q } else { q };
         let norm = (q.x * q.x + q.y * q.y + q.z * q.z).sqrt();
         let ratio = if norm < SMALL_VECTOR_NORM {
-            // 2·atan(n/w)/n = (2/w)·(1 − n²/(3w²) + …), Eq. (SO3-3).
-            2.0 / q.w * (1.0 - norm * norm / (3.0 * q.w * q.w))
+            // 2·atan(n/w)/n = (2/w)·(1 − n²/3 + O(n⁴)), using w² = 1 − n²; for n < 1e-6 the
+            // O(n⁴) terms are below 1e-24, far under rounding. Eq. (SO3-3).
+            2.0 / q.w * (1.0 - norm * norm / 3.0)
         } else {
             2.0 * atan2(norm, q.w) / norm
         };
