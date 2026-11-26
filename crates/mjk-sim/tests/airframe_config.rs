@@ -1,7 +1,8 @@
 //! Acceptance tests for configuration loading (#7): each malformed sample file must produce an
 //! error that names the exact field at fault.
 
-use mjk_core::EngineError;
+use mjk_core::{EngineError, FieldPath};
+use mjk_math::Mat3;
 use mjk_sim::config::load_airframe;
 
 /// A malformed fixture, the field its error must name, and a fragment of the reason.
@@ -65,6 +66,12 @@ fn value_rows() -> Vec<Row> {
             "positive, finite mass",
         ),
         (fixture!("zero_mass"), "mass.mass_kg", "found 0"),
+        (fixture!("nonfinite_cg"), "mass.cg_m[1]", "must be finite"),
+        (
+            fixture!("singular_inertia"),
+            "mass.inertia_kg_m2",
+            "cannot be inverted in double precision",
+        ),
         (
             fixture!("asymmetric_inertia"),
             "mass.inertia_kg_m2[0][1]",
@@ -97,6 +104,14 @@ fn valid_sample_loads() {
     let airframe = load_airframe("valid.toml", text).expect("valid sample loads");
     assert_eq!(airframe.name, "Example quadrotor");
     assert!((airframe.mass.cg_m[2] - 0.01).abs() < 1e-12);
+    let props = airframe
+        .mass
+        .mass_properties("valid.toml", &FieldPath::root().key("mass"))
+        .expect("valid mass properties");
+    assert!((props.mass_kg() - 1.5).abs() < 1e-15);
+    assert!((props.cg_m().z - 0.01).abs() < 1e-15);
+    let inverse = props.inertia_kg_m2() * props.inertia_inverse();
+    assert!((inverse - Mat3::identity()).max_abs() < 1e-12);
 }
 
 #[test]

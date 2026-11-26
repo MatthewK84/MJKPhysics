@@ -1,16 +1,20 @@
-//! Mass properties.
-//!
-//! Currently the physical-consistency check for inertia tensors; the mass-properties builder
-//! arrives with #10 and builds on it.
+//! Mass properties: the physical-consistency check for inertia tensors, validated
+//! [`MassProperties`], and a builder that combines simple components into one rigid body.
+
+mod composite;
+mod properties;
 
 use std::fmt;
+
+pub use composite::{Component, ComponentProblem, CompositeError, Shape, composite};
+pub use properties::{MassError, MassProperties};
 
 /// Relative tolerance for symmetry and for the semidefiniteness test, scaled by the largest
 /// tensor entry. It absorbs rounding in published or computed tensors, not modeling error.
 pub const RELATIVE_TOLERANCE: f64 = 1e-9;
 
 /// Why a tensor cannot be the inertia of a rigid body about its center of mass.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum InertiaProblem {
     /// Entry `[row][col]` is NaN or infinite.
     NotFinite {

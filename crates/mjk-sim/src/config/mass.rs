@@ -1,7 +1,8 @@
 //! The `[mass]` table: mass, center of mass and inertia tensor.
 
 use mjk_core::{EngineError, FieldPath};
-use mjk_dynamics::mass::{InertiaProblem, check_inertia};
+use mjk_dynamics::mass::{InertiaProblem, MassError, MassProperties};
+use mjk_math::{Mat3, Vec3};
 use serde::{Deserialize, Serialize};
 
 /// Mass properties of a rigid airframe, in body axes (FRD).
@@ -17,29 +18,43 @@ pub struct MassConfig {
 }
 
 impl MassConfig {
+    /// The validated mass properties of the airframe.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Config`] naming the first implausible field: the mass, a
+    /// center-of-mass coordinate, or the inertia tensor (an entry, for a non-finite or
+    /// asymmetric one).
+    pub fn mass_properties(
+        &self,
+        document: &str,
+        path: &FieldPath,
+    ) -> Result<MassProperties, EngineError> {
+        let cg_m = Vec3::from_array(self.cg_m);
+        let inertia = Mat3::from_rows(self.inertia_kg_m2);
+        MassProperties::new(self.mass_kg, cg_m, inertia)
+            .map_err(|error| mass_error(document, path, error))
+    }
+
     /// Checks that the values describe a physically possible rigid body.
     ///
     /// # Errors
     ///
     /// Returns [`EngineError::Config`] naming the first implausible field.
     pub fn validate(&self, document: &str, path: &FieldPath) -> Result<(), EngineError> {
-        if !(self.mass_kg.is_finite() && self.mass_kg > 0.0) {
-            let reason = format!(
-                "must be a positive, finite mass in kilograms; found {}",
-                self.mass_kg
-            );
-            return Err(EngineError::config(document, path.key("mass_kg"), reason));
+        self.mass_properties(document, path).map(|_| ())
+    }
+}
+
+fn mass_error(document: &str, path: &FieldPath, error: MassError) -> EngineError {
+    let reason = error.to_string();
+    match error {
+        MassError::Mass { .. } => EngineError::config(document, path.key("mass_kg"), reason),
+        MassError::CenterOfMass { axis } => {
+            EngineError::config(document, path.key("cg_m").index(axis), reason)
         }
-        if let Some(axis) = self.cg_m.iter().position(|value| !value.is_finite()) {
-            let reason = "must be finite".to_owned();
-            return Err(EngineError::config(
-                document,
-                path.key("cg_m").index(axis),
-                reason,
-            ));
-        }
-        check_inertia(&self.inertia_kg_m2)
-            .map_err(|problem| inertia_error(document, &path.key("inertia_kg_m2"), problem))
+        MassError::Inertia(problem) => inertia_error(document, &path.key("inertia_kg_m2"), problem),
+        MassError::Singular => EngineError::config(document, path.key("inertia_kg_m2"), reason),
     }
 }
 

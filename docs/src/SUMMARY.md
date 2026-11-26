@@ -13,6 +13,7 @@
 # Physics
 
 - [Models](models/README.md)
+  - [Rigid-body dynamics](models/rigid-body.md)
 - [Validation](validation/README.md)
 - [Airframes](airframes/README.md)
 

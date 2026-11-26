@@ -38,6 +38,7 @@ type, as in `Vec3<Body>` and `Vec3<World>`; the attitude is a `Rotation<World, B
 | Body | $`B`$ | `Body` | Vehicle center of mass | **Forward, Right, Down** |
 | Stability | $`S`$ | `Stability` | Center of mass | $`\mathbf{x}_S`$ along the relative wind projected onto the body $`x`$–$`z`$ plane; $`\mathbf{y}_S = \mathbf{y}_B`$ |
 | Wind (air-relative) | $`A`$ | `Wind` | Center of mass | $`\mathbf{x}_A`$ along the relative wind; $`\mathbf{z}_A`$ in the body plane of symmetry |
+| Part | $`P`$ | `Part` | Center of one component | The component's own axes, for building mass properties ([Rigid-body dynamics](models/rigid-body.md)) |
 | Render | $`\mathcal{R}`$ | viewer only | Same as $`W`$ | East, Up, South (Y-up, right-handed) |
 
 The wind axes are written $`A`$, not $`W`$, so they cannot be confused with the world frame. All
@@ -383,7 +384,7 @@ and the renderer.
 |---|---|---|---|
 | $`\mathbf{p}^W = (p_N, p_E, p_D)`$ | Position of the center of mass | m | `position_m: Vec3<World>` |
 | $`\mathbf{v}^W`$ | Velocity of the center of mass relative to $`W`$ | m/s | `velocity_m_s: Vec3<World>` |
-| $`\mathbf{q}_{WB}`$ | Attitude, body to world | — | `q_wb: UnitQuat` |
+| $`\mathbf{q}_{WB}`$ | Attitude, body to world | — | `q_wb: Rotation<World, Body>` |
 | $`\boldsymbol{\omega}^B = (p, q, r)`$ | Body angular velocity relative to $`W`$, in body axes | rad/s | `omega_rad_s: Vec3<Body>` |
 | $`\mathbf{v}_{\text{wind}}^W`$ | Wind velocity | m/s | `wind_m_s: Vec3<World>` |
 | $`\mathbf{v}_a = \mathbf{v} - \mathbf{v}_{\text{wind}}`$, $`(u_a, v_a, w_a)`$ | Air-relative velocity and its body components | m/s | `v_air_m_s: Vec3<Body>` |
@@ -391,7 +392,7 @@ and the renderer.
 | $`\alpha`$, $`\beta`$ | Angle of attack, sideslip (CONV-2) | rad | `alpha_rad`, `beta_rad` |
 | $`\psi, \theta, \phi`$ | Yaw, pitch, roll (I/O only) | rad | `yaw_rad`, `pitch_rad`, `roll_rad` |
 | $`m`$ | Mass | kg | `mass_kg` |
-| $`\mathbf{J}^B`$ | Inertia tensor about the center of mass, body axes | kg·m² | `inertia_kg_m2: Mat3` |
+| $`\mathbf{J}^B`$ | Inertia tensor about the center of mass, body axes | kg·m² | `inertia_kg_m2: Mat3<Body>` |
 | $`\mathbf{F}`$, $`\mathbf{M} = (M_x, M_y, M_z)`$ | Force; moment about the center of mass | N, N·m | `Wrench<F>` |
 | $`L`$, $`D`$, $`Y`$ | Lift, drag, side force | N | `lift_n`, `drag_n`, `side_force_n` |
 | $`C_L, C_D, C_Y, C_l, C_m, C_n`$ | Force and moment coefficients | — | `c_lift`, `c_drag`, … |

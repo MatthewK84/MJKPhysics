@@ -28,7 +28,7 @@ mod vec3;
 
 pub use eigen::{JACOBI_TOLERANCE, MAX_JACOBI_SWEEPS, SymmetricEigen};
 pub use euler::{EulerAngles, GIMBAL_LOCK_COS};
-pub use frame::{Body, Frame, Stability, Wind, World};
+pub use frame::{Body, Frame, Part, Stability, Wind, World};
 pub use mat3::Mat3;
 pub use quat::{Quat, UnitQuat};
 pub use rotation::Rotation;

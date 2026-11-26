@@ -38,7 +38,8 @@ fixed-wing aircraft.
 > [engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html),
 > the engineering book, and the error and configuration model.
 > [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
-> frame-typed math and the SO(3) maps are done, and rigid-body dynamics is next.
+> frame-typed math, the SO(3) maps and the rigid-body equations of motion are done, and the
+> integrators are next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.

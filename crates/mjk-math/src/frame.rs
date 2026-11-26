@@ -28,6 +28,11 @@ pub struct Stability;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Wind;
 
+/// Part axes: the principal axes of one component of a composite body, such as an arm or a
+/// battery, used when its inertia is moved into body axes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Part;
+
 impl Frame for World {
     const NAME: &'static str = "World";
 }
@@ -42,4 +47,8 @@ impl Frame for Stability {
 
 impl Frame for Wind {
     const NAME: &'static str = "Wind";
+}
+
+impl Frame for Part {
+    const NAME: &'static str = "Part";
 }
