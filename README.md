@@ -218,19 +218,46 @@ M3 is the first milestone where you can fly a validated quadrotor in the browser
 
 ## Getting started
 
-There is no engine to run yet. Once the workspace lands
-([#2](https://github.com/MatthewK84/MJKPhysics/issues/2)), building and testing will be:
+The workspace builds, but the crates are scaffolding: physics arrives with
+[M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2). You need
+[rustup](https://rustup.rs); the toolchain, components and WebAssembly target are pinned in
+`rust-toolchain.toml`.
 
 ```bash
-git clone https://github.com/MatthewK84/MJKPhysics.git
+git clone https://github.com/MatthewK84/MJKPhysics.git && cd MJKPhysics
 ```
 
 ```bash
-cd MJKPhysics && cargo build --workspace && cargo test --workspace
+rustup toolchain install
 ```
 
-The Rust toolchain will be pinned in `rust-toolchain.toml`, so `rustup` selects the right version
-and the WebAssembly target automatically.
+```bash
+cargo build --workspace && cargo test --workspace
+```
+
+Check that every crate only depends on what its layer allows:
+
+```bash
+cargo xtask layering
+```
+
+### Repository layout
+
+```text
+crates/
+  mjk-math       frame-tagged linear algebra, quaternions, SO(3)
+  mjk-dynamics   rigid body, integrators, world loop, trim
+  mjk-env        atmosphere, gravity, wind, turbulence
+  mjk-aero       rotors, propulsion, fixed-wing aerodynamics
+  mjk-contact    collision detection, contact and joint solver
+  mjk-control    allocation, controllers, guidance
+  mjk-sensors    IMU, GNSS, barometer, magnetometer, range, airspeed
+  mjk-sim        world composition, airframes, scenarios
+  mjk-cli        the `mjk` command-line tool
+  mjk-wasm       WebAssembly bindings for the browser viewer
+xtask/           repository automation (`cargo xtask layering`)
+assets/readme/   source and render script for the README illustration
+```
 
 ## Contributing
 

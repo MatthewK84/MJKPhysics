@@ -1,0 +1,18 @@
+[package]
+name = "mjk-aero"
+description = "Rotor, propulsion and fixed-wing aerodynamic models for MJKPhysics."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+mjk-math.workspace = true
+mjk-dynamics.workspace = true
+mjk-env.workspace = true
+
+[lints]
+workspace = true
