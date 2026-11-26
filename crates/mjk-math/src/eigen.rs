@@ -53,6 +53,11 @@ impl Sym {
         (self.xy * self.xy + self.xz * self.xz + self.yz * self.yz).sqrt()
     }
 
+    /// True when the off-diagonal entries are negligible against `threshold`.
+    fn is_diagonal(self, threshold: f64) -> bool {
+        self.off_diagonal_norm() <= threshold
+    }
+
     /// Entries `(a_pp, a_qq, a_pq, a_pr, a_qr)` for a plane.
     fn plane(self, plane: Plane) -> (f64, f64, f64, f64, f64) {
         let [xx, yy, zz] = self.diag;
@@ -183,14 +188,14 @@ impl<F: Frame> Mat3<F> {
         let mut columns = Mat3::<F>::identity().rows();
         let threshold = JACOBI_TOLERANCE * self.max_abs();
         for _ in 0..MAX_JACOBI_SWEEPS {
-            if sym.off_diagonal_norm() <= threshold {
+            if sym.is_diagonal(threshold) {
                 return Ok(sorted(sym.diag, columns));
             }
             for plane in PLANES {
                 (sym, columns) = jacobi_step(sym, columns, plane);
             }
         }
-        if sym.off_diagonal_norm() <= threshold {
+        if sym.is_diagonal(threshold) {
             return Ok(sorted(sym.diag, columns));
         }
         Err(EngineError::Convergence {
@@ -226,6 +231,54 @@ mod tests {
         let eigen = m.symmetric_eigen().expect("converges");
         let [a, b, c] = eigen.values;
         assert!((a - 1.0).abs() < 1e-15 && (b - 2.0).abs() < 1e-15 && (c - 3.0).abs() < 1e-15);
+    }
+
+    /// Largest `‖A·v − λ·v‖` over the eigenpairs, relative to the largest entry of `A`.
+    fn residual(m: Mat3<Body>) -> f64 {
+        let eigen = m.symmetric_eigen().expect("converges");
+        let worst = eigen
+            .values
+            .iter()
+            .zip(eigen.vectors)
+            .map(|(&value, vector)| (m * vector - vector * value).norm())
+            .fold(0.0, f64::max);
+        worst / m.max_abs()
+    }
+
+    fn symmetric(diag: [f64; 3], [xy, xz, yz]: [f64; 3]) -> Mat3<Body> {
+        let [xx, yy, zz] = diag;
+        Mat3::from_rows([[xx, xy, xz], [xy, yy, yz], [xz, yz, zz]])
+    }
+
+    #[test]
+    fn off_diagonal_patterns_that_cancel_in_sums_are_still_decomposed() {
+        // A single product of inertia, one entry zero, or signs such that sums of entries and
+        // squares cancel: convergence must be judged by the sum of squares and nothing else.
+        let patterns = [
+            [0.5, 0.0, 0.0],
+            [0.0, 0.5, 0.0],
+            [0.0, 0.0, 0.5],
+            [0.0, 0.5, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.5, 0.0],
+            [-1.0, 1.0, 1.0],
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, -1.0],
+        ];
+        for pattern in patterns {
+            let error = residual(symmetric([3.0, 2.0, 5.0], pattern));
+            assert!(error < 1e-14, "{pattern:?}: residual {error:e}");
+        }
+    }
+
+    #[test]
+    fn accuracy_is_independent_of_scale() {
+        // An inertia tensor of a 30 g vehicle has entries near 1e-5 kg·m²; scale far below that.
+        for scale in [1e-8, 1.0, 1e8] {
+            let m = symmetric([3.0, 2.0, 5.0], [0.4, -0.3, 0.2]) * scale;
+            let error = residual(m);
+            assert!(error < 1e-14, "scale {scale:e}: residual {error:e}");
+        }
     }
 
     #[test]

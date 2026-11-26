@@ -183,11 +183,16 @@ mod tests {
         [[a, 0.0, 0.0], [0.0, b, 0.0], [0.0, 0.0, c]]
     }
 
-    /// `R · diag · Rᵀ` for a rotation of 0.6 rad about the axis (1, 2, 2)/3, with `R` from
-    /// Rodrigues' formula `R = c·I + s·[u]× + (1 − c)·u·uᵀ`.
+    /// `R · diag · Rᵀ` for a rotation of 0.6 rad about the axis (1, 2, 2)/3.
     fn rotated(principal: [[f64; 3]; 3]) -> [[f64; 3]; 3] {
-        let (s, c) = 0.6_f64.sin_cos();
-        let (ux, uy, uz) = (1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0);
+        rotated_by(principal, 0.6, (1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0))
+    }
+
+    /// `R · diag · Rᵀ` for a rotation by `angle` about the unit `axis`, with `R` from
+    /// Rodrigues' formula `R = c·I + s·[u]× + (1 − c)·u·uᵀ`.
+    fn rotated_by(principal: [[f64; 3]; 3], angle: f64, axis: (f64, f64, f64)) -> [[f64; 3]; 3] {
+        let (s, c) = angle.sin_cos();
+        let (ux, uy, uz) = axis;
         let t = 1.0 - c;
         let rot = [
             [c + t * ux * ux, t * ux * uy - s * uz, t * ux * uz + s * uy],
@@ -269,5 +274,135 @@ mod tests {
         let mut nearly = rotated(diag(0.02, 0.03, 0.04));
         nearly[0][1] += 1e-15;
         assert!(check_inertia(&nearly).is_ok());
+    }
+
+    #[test]
+    fn symmetry_tolerance_is_relative_to_the_largest_entry() {
+        // 1e-9 kg·m² on a tensor whose largest entry is 0.04 is 2.5e-8 relative: too large.
+        let mut skewed = rotated(diag(0.02, 0.03, 0.04));
+        skewed[0][1] += 1e-9;
+        assert!(matches!(
+            check_inertia(&skewed),
+            Err(InertiaProblem::NotSymmetric { row: 0, col: 1, .. })
+        ));
+    }
+
+    #[test]
+    fn second_leading_minor_is_tested_at_small_scale() {
+        let indefinite = [[0.02, 0.03, 0.0], [0.03, 0.02, 0.0], [0.0, 0.0, 0.02]];
+        assert!(matches!(
+            check_inertia(&indefinite),
+            Err(InertiaProblem::NotPositiveDefinite { order: 2, .. })
+        ));
+    }
+
+    fn is_triangle_violation(tensor: &[[f64; 3]; 3]) -> bool {
+        matches!(
+            check_inertia(tensor),
+            Err(InertiaProblem::ViolatesTriangleInequality { .. })
+        )
+    }
+
+    /// A plate with its normal along `axis`, violating `I_normal ≤ I_a + I_b` by `excess`.
+    fn plate(axis: usize, largest: f64, excess: f64) -> [[f64; 3]; 3] {
+        let mut moments = [0.5 * (largest - excess); 3];
+        moments[axis] = largest;
+        diag(moments[0], moments[1], moments[2])
+    }
+
+    #[test]
+    fn diagonal_minors_decide_near_a_plate() {
+        // For a plate, S = ½·tr(J)·I − J has eigenvalues (L/2, L/2, −excess/2), so a diagonal
+        // entry crosses its allowance (RELATIVE_TOLERANCE·L) at excess = 2·tol·L, before the
+        // 2×2 minors (4·tol·L) or the determinant (8·tol·L) do.
+        let largest = 0.01;
+        let tol = super::RELATIVE_TOLERANCE * largest;
+        for axis in 0..3 {
+            assert!(
+                is_triangle_violation(&plate(axis, largest, 3.0 * tol)),
+                "axis {axis}"
+            );
+            assert!(
+                check_inertia(&plate(axis, largest, tol)).is_ok(),
+                "axis {axis}"
+            );
+        }
+    }
+
+    /// Eigenvalues `l1` and `l2` mixed at 45° in the plane of axes `p` and `q`; `l3` on `r`.
+    fn mixed_in_plane([l1, l2, l3]: [f64; 3], [p, q, r]: [usize; 3]) -> [[f64; 3]; 3] {
+        let mut j = [[0.0; 3]; 3];
+        j[p][p] = 0.5 * (l1 + l2);
+        j[q][q] = 0.5 * (l1 + l2);
+        j[p][q] = 0.5 * (l1 - l2);
+        j[q][p] = 0.5 * (l1 - l2);
+        j[r][r] = l3;
+        j
+    }
+
+    #[test]
+    fn each_two_by_two_minor_is_tested() {
+        // S has eigenvalues (−δ, a, b) with the first two mixed in one coordinate plane, so its
+        // diagonal is positive, the determinant −δ·a·b = −1e-16 is inside its allowance
+        // (tol·s³ = 1e-15), and only that plane's 2×2 minor, −a·δ = −1e-12, exceeds its
+        // allowance (tol·s² = 1e-13).
+        let (a, b, delta) = (0.01, 1e-4, 1e-10);
+        let eigenvalues = [a + b, b - delta, a - delta];
+        for plane in [[0, 1, 2], [0, 2, 1], [1, 2, 0]] {
+            let tensor = mixed_in_plane(eigenvalues, plane);
+            assert!(is_triangle_violation(&tensor), "plane {plane:?}");
+        }
+    }
+
+    #[test]
+    fn determinant_decides_for_a_general_orientation() {
+        // Principal moments (0.01, 0.01, 0.02 + 1e-9): S has eigenvalues near (0.01, 0.01,
+        // −5e-10). In a general orientation its diagonal and 2×2 minors are positive and only
+        // the determinant, about −5e-14, exceeds its allowance (about 8e-15).
+        let principal = diag(0.01, 0.01, 0.02 + 1e-9);
+        let orientations = [
+            (0.6, (1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0)),
+            (0.9, (2.0 / 3.0, -1.0 / 3.0, 2.0 / 3.0)),
+            (-1.1, (2.0 / 3.0, 2.0 / 3.0, -1.0 / 3.0)),
+        ];
+        for (angle, axis) in orientations {
+            let tensor = rotated_by(principal, angle, axis);
+            assert!(is_triangle_violation(&tensor), "{angle} rad about {axis:?}");
+        }
+        assert!(check_inertia(&rotated(diag(0.01, 0.01, 0.02))).is_ok());
+    }
+
+    #[test]
+    fn problems_describe_themselves() {
+        let messages = [
+            (
+                InertiaProblem::NotFinite { row: 2, col: 0 },
+                "entry [2][0] is not finite",
+            ),
+            (
+                InertiaProblem::NotSymmetric {
+                    row: 0,
+                    col: 1,
+                    upper: 0.5,
+                    lower: 0.25,
+                },
+                "not symmetric: [0][1] = 0.5 but [1][0] = 0.25",
+            ),
+            (
+                InertiaProblem::NotPositiveDefinite {
+                    order: 2,
+                    minor: -0.003,
+                },
+                "not positive definite: leading principal minor of order 2 is -3.000e-3",
+            ),
+            (
+                InertiaProblem::ViolatesTriangleInequality { minor: -2.5e-9 },
+                "principal moments violate the triangle inequality, so no rigid body has this \
+                 inertia (½·tr(J)·I − J has a principal minor of -2.500e-9)",
+            ),
+        ];
+        for (problem, expected) in messages {
+            assert_eq!(problem.to_string(), expected);
+        }
     }
 }

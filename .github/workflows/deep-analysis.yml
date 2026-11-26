@@ -1,0 +1,51 @@
+# Weekly whole-engine mutation testing. Pull requests and pushes mutate only the lines they
+# change (ci.yml, "Mutation testing (changed lines)"); this run catches gaps in code that has not
+# changed since the gate was introduced, and survivors created by test changes alone.
+# Scheduled workflows only run from the default branch.
+name: Deep analysis
+
+on:
+  schedule:
+    - cron: "23 3 * * 0" # Sundays 03:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  mutants:
+    name: Mutation testing (shard ${{ matrix.shard }} of 4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: cargo-mutants@27.1.0
+      - name: Mutate the engine (.cargo/mutants.toml); any survivor fails
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: cargo mutants --workspace --shard "${SHARD}/4" --no-shuffle -j 2 -o "$RUNNER_TEMP"
+      - name: List surviving mutants in the job summary
+        if: failure()
+        run: |
+          {
+            echo "### Surviving mutants"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/mutants.out/missed.txt" "$RUNNER_TEMP/mutants.out/timeout.txt" 2>/dev/null
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

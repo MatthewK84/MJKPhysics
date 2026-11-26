@@ -3,3 +3,4 @@
 /viewer/dist
 *.profraw
 /docs/book
+/mutants.out*

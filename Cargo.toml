@@ -35,7 +35,7 @@ toml = "1.2.3"
 proc-macro2 = { version = "1.0.107", features = ["span-locations"] }
 rustc-demangle = "0.1.28"
 serde_json = "1.0.154"
-syn = { version = "2", features = ["full", "visit", "parsing"] }
+syn = { version = "3", features = ["full", "visit", "parsing"] }
 
 # Test-only dependencies.
 proptest = "1.12.0"

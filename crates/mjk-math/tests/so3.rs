@@ -156,3 +156,57 @@ proptest! {
         prop_assert!(Rotation::<World, Body>::from_matrix(reflected).is_none());
     }
 }
+
+// ---------------------------------------------------------------- deterministic edge cases
+
+#[test]
+fn log_of_the_identity_is_exactly_zero() {
+    let zero = [0.0_f64; 3].map(f64::to_bits);
+    assert_eq!(UnitQuat::identity().log().map(f64::to_bits), zero);
+    let log = Rotation::<Body, Body>::identity().log();
+    assert_eq!(log.to_array().map(f64::to_bits), zero);
+}
+
+#[test]
+fn exp_is_accurate_to_an_ulp_just_below_the_series_switch() {
+    // θ = 2⁻¹⁰ < 1e-3 uses the series for sin(θ/2)/θ, so x = sin(2⁻¹¹) exactly up to rounding.
+    // Reference: sin(2⁻¹¹) from its Taylor series in exact rational arithmetic.
+    const SIN_2_POW_MINUS_11: f64 = 4.882_812_305_974_466e-4;
+    let x = UnitQuat::exp([2.0_f64.powi(-10), 0.0, 0.0]).quat().x;
+    let error = (x - SIN_2_POW_MINUS_11).abs() / SIN_2_POW_MINUS_11;
+    assert!(error <= 2.0 * f64::EPSILON, "relative error {error:e}");
+}
+
+#[test]
+fn log_is_accurate_to_a_few_ulps_in_the_small_norm_branch() {
+    // |v| = 2⁻²⁰ gives a vector part of norm 2⁻²¹ < 1e-6, where log uses its series.
+    for v in [
+        [2.0_f64.powi(-20), 0.0, 0.0],
+        [0.0, -(2.0_f64.powi(-20)), 0.0],
+        [3e-7, 4e-7, -5e-7],
+    ] {
+        let back = UnitQuat::exp(v).log();
+        let norm = v.iter().map(|c| c * c).sum::<f64>().sqrt();
+        let error = (0..3).map(|i| (back[i] - v[i]).abs()).fold(0.0, f64::max);
+        assert!(error <= 4.0 * f64::EPSILON * norm, "{v:?}: error {error:e}");
+    }
+}
+
+#[test]
+fn angles_of_rotations_about_one_axis() {
+    let axis = [2.0 / 3.0, -1.0 / 3.0, 2.0 / 3.0];
+    let about = |angle: f64| UnitQuat::exp(axis.map(|c| c * angle));
+    assert!((about(0.3).angle() - 0.3).abs() < 1e-15);
+    assert!((about(-2.5).angle() - 2.5).abs() < 1e-15);
+    assert!((about(0.25).angle_to(about(-0.5)) - 0.75).abs() < 1e-15);
+    let rotation = |angle: f64| Rotation::<World, Body>::from_unit_quat(about(angle));
+    assert!((rotation(1.2).angle() - 1.2).abs() < 1e-15);
+    assert!((rotation(1.2).angle_to(rotation(0.2)) - 1.0).abs() < 1e-15);
+}
+
+#[test]
+fn left_jacobian_inverse_inverts_the_left_jacobian() {
+    let theta: Vec3<Body> = Vec3::new(0.3, -0.2, 0.5);
+    let product = left_jacobian(theta) * mjk_math::so3::left_jacobian_inverse(theta);
+    assert!(identity_error(product) < 1e-15);
+}

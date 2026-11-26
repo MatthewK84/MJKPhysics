@@ -28,7 +28,12 @@ fn cases() -> Vec<Case> {
         (
             fixture!("newer_version"),
             "schema_version",
-            "update MJKPhysics",
+            "schema version 2, but this build reads version 1; update MJKPhysics",
+        ),
+        (
+            fixture!("older_version"),
+            "schema_version",
+            "schema version 0 is not supported (oldest supported: 1)",
         ),
         (fixture!("wrong_kind"), "kind", "found \"scenario\""),
         (fixture!("unknown_field"), "mass.mas_kg", "unknown field"),
@@ -49,6 +54,7 @@ fn cases() -> Vec<Case> {
             "mass.mass_kg",
             "positive, finite mass",
         ),
+        (fixture!("zero_mass"), "mass.mass_kg", "found 0"),
         (
             fixture!("asymmetric_inertia"),
             "mass.inertia_kg_m2[0][1]",

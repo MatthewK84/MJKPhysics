@@ -1,0 +1,43 @@
+# cargo-mutants configuration (#88). CI runs mutation testing on the lines each change touches
+# and fails on any mutant that survives; a weekly job mutates the whole engine
+# (CONTRIBUTING.md, "Mutation testing").
+
+# Engine crates only: xtask is repository tooling, and the CLI and WebAssembly crates are thin
+# front ends covered by their own smoke tests.
+exclude_globs = ["xtask/**", "crates/mjk-cli/**", "crates/mjk-wasm/**"]
+
+# Equivalent mutants: changes no test can observe, because both versions compute the same
+# result for every input. Each entry names the file and function, never a line number, and says
+# why the two versions agree. Adding one is a reviewed change to this file.
+exclude_re = [
+    # Switching between a Taylor series and the closed form at `<` or `<=` the switch point:
+    # at the switch point both branches are accurate to rounding (docs: SO(3) maps).
+    'so3\.rs:.*replace < with <= in half_sine_over_angle$',
+    'so3\.rs:.*replace < with <= in jacobian_coefficients$',
+    'so3\.rs:.*replace < with <= in inverse_jacobian_coefficient$',
+    # In `log`: at w = 0 exactly (a half turn) q and −q give opposite rotation vectors of length
+    # π, both correct; and at the small-norm switch point both branches agree to rounding.
+    'so3\.rs:.*replace < with <= in UnitQuat::log$',
+    # In log's small-norm series (2/w)·(1 − n²/(3w²)), turning 3·w·w into 3/w·w or 3·w/w
+    # replaces w² = 1 − n² by 1: an O(n⁴) change, below 1e-24 relative for n < 1e-6. The pattern
+    # also covers `2/w · (…)`, which the small-norm accuracy test kills in any case.
+    'so3\.rs:.*replace \* with / in UnitQuat::log$',
+    # The determinant of a matrix that passed the orthonormality check is ±1, never 0.
+    'so3\.rs:.*replace > with >= in Rotation<To, From>::from_matrix$',
+    # Shepperd's method is exact from any of several equal largest candidates.
+    'so3\.rs:.*replace > with >= in shepperd$',
+    # At cos(pitch) exactly equal to the gimbal-lock threshold both formulas give the same angles.
+    'euler\.rs:.*replace < with <= in Rotation<To, From>::to_euler$',
+    # The triple product of an orthonormal basis is ±1, never 0.
+    'eigen\.rs:.*replace < with <= in sorted$',
+    # Not strictly equivalent: `<` and `<=` differ for a minor exactly equal to minus its
+    # allowance. Which side of that boundary is rejected is a tolerance convention, not physics;
+    # the tests pin the tolerance at three times and at one times its value instead.
+    'mass\.rs:.*replace < with <= in check_realizable$',
+    # `root()` is defined as `Self::default()`.
+    'field_path\.rs:.*replace FieldPath::root -> Self with Default::default\(\)$',
+]
+
+# Release-like timing is unnecessary; tests are fast, so a mutant that makes one loop forever
+# is cut off quickly.
+timeout_multiplier = 3.0

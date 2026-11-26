@@ -230,13 +230,13 @@ impl<'ast> Visit<'ast> for Checker<'_> {
         visit::visit_type_trait_object(self, node);
     }
 
-    fn visit_type_bare_fn(&mut self, node: &'ast syn::TypeBareFn) {
+    fn visit_type_fn_ptr(&mut self, node: &'ast syn::TypeFnPtr) {
         self.push(
             node.span(),
             Rule::Pointers,
             "function pointer type; use generics",
         );
-        visit::visit_type_bare_fn(self, node);
+        visit::visit_type_fn_ptr(self, node);
     }
 }
 

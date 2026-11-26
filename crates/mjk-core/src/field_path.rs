@@ -91,6 +91,21 @@ mod tests {
     }
 
     #[test]
+    fn built_from_segments_like_extended_paths() {
+        let segments = vec![
+            Segment::Key("rotors".to_owned()),
+            Segment::Index(2),
+            Segment::Key("position_m".to_owned()),
+        ];
+        let built = FieldPath::from_segments(segments);
+        assert_eq!(built.to_string(), "rotors[2].position_m");
+        assert_eq!(
+            built,
+            FieldPath::root().key("rotors").index(2).key("position_m")
+        );
+    }
+
+    #[test]
     fn root_is_the_document() {
         assert_eq!(FieldPath::root().to_string(), "(document)");
     }

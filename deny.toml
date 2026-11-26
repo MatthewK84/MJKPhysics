@@ -1,0 +1,34 @@
+# cargo-deny policy: known vulnerabilities, licenses, duplicate or wildcard dependencies and
+# where crates may come from. CI runs `cargo deny check` on every change and daily
+# (CONTRIBUTING.md, "Supply chain").
+
+[graph]
+all-features = true
+
+[advisories]
+# Every RustSec advisory fails the build: vulnerabilities, unmaintained and unsound crates.
+yanked = "deny"
+ignore = []
+
+[licenses]
+# The licenses the dependency graph uses today, all compatible with MIT OR Apache-2.0.
+# Adding one is a reviewed change to this file.
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "Unicode-3.0",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+# Workspace crates refer to each other by path; they are never published.
+allow-wildcard-paths = true
+skip = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

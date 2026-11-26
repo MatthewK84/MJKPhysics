@@ -112,7 +112,9 @@ impl<F: Frame> Mat3<F> {
     pub fn inverse(self) -> Option<Self> {
         let [c0, c1, c2] = self.transpose().row_vectors();
         let det = c0.dot(c1.cross(c2));
-        if !(det.is_finite() && det.abs() > 0.0) {
+        // A zero determinant makes every entry below infinite or NaN, so the finiteness check
+        // on the result rejects singular matrices too.
+        if !det.is_finite() {
             return None;
         }
         let inverse = Self::from_rows([
