@@ -20,8 +20,8 @@ Equations carry stable IDs such as (CONV-3) so code comments can cite them.
 - A superscript names the frame a vector is **resolved in**: $\mathbf{v}^B$ is $\mathbf{v}$
   expressed in body axes.
 - A rotation or quaternion with two subscripts maps coordinates from the right frame to the left
-  frame: $\mathbf{x}^W = \mathbf{R}_{WB}\,\mathbf{x}^B$. Subscripts cancel inward under
-  composition: $\mathbf{R}_{WS} = \mathbf{R}_{WB}\,\mathbf{R}_{BS}$.
+  frame: $\mathbf{x}^W = \mathbf{R}_{WB} \mathbf{x}^B$. Subscripts cancel inward under
+  composition: $\mathbf{R}_{WS} = \mathbf{R}_{WB} \mathbf{R}_{BS}$.
 - $[\mathbf{a}]_\times$ is the skew-symmetric matrix with $[\mathbf{a}]_\times\mathbf{b} = \mathbf{a}\times\mathbf{b}$.
 - $\otimes$ is the quaternion product and $\mathbf{q}^{\ast}$ the conjugate.
 - A dot is a time derivative taken in the world frame unless stated otherwise.
@@ -55,7 +55,7 @@ point. At that range:
 |---|---|
 | Earth curvature: surface drop $d^2/2R_E$ | 7.85 m |
 | Change in gravity direction $d/R_E$ | 0.090° |
-| Coriolis acceleration $2\,\Omega_E V$ | $5.8\times10^{-3}$ m/s² (0.06 % of $g$) |
+| Coriolis acceleration $2 \Omega_E V$ | $5.8\times10^{-3}$ m/s² (0.06 % of $g$) |
 
 Centripetal acceleration from earth rotation is not neglected: it is already included in normal
 gravity when the WGS-84 gravity model is selected
@@ -76,28 +76,28 @@ and 3 (section 6).
 The rotation from body to world is defined by its columns, which are the body axes expressed in
 world coordinates:
 
-$$
+```math
 \mathbf{R}_{WB} = \begin{bmatrix} \mathbf{x}_B^W & \mathbf{y}_B^W & \mathbf{z}_B^W \end{bmatrix},
 \qquad \mathbf{x}^W = \mathbf{R}_{WB}\,\mathbf{x}^B,
 \qquad \mathbf{R}_{BW} = \mathbf{R}_{WB}^{\top}
 \tag{CONV-1}
-$$
+```
 
 ### 2.3 Stability and wind axes
 
 With the air-relative velocity resolved in body axes as $\mathbf{v}_a^B = (u_a, v_a, w_a)$ and
 airspeed $V_a = \lVert \mathbf{v}_a \rVert$:
 
-$$
+```math
 \alpha = \operatorname{atan2}(w_a,\, u_a), \qquad \beta = \arcsin\!\left(\frac{v_a}{V_a}\right)
 \tag{CONV-2}
-$$
+```
 
-$$
+```math
 \mathbf{R}_{BS} = \mathbf{R}_y(-\alpha), \qquad \mathbf{R}_{SA} = \mathbf{R}_z(\beta), \qquad
 \mathbf{v}_a^B = \mathbf{R}_{BS}\,\mathbf{R}_{SA} \begin{bmatrix} V_a \\ 0 \\ 0 \end{bmatrix}
 \tag{CONV-3}
-$$
+```
 
 Positive $\alpha$ means the relative wind meets the aircraft from below. Positive $\beta$ means it
 meets the aircraft from the right. Both angles are undefined as $V_a \to 0$; models that use them
@@ -109,19 +109,19 @@ must define their behaviour below a stated airspeed
 The viewer uses a right-handed Y-up frame. One module, and only that module, converts from world
 coordinates:
 
-$$
+```math
 \mathbf{C} = \begin{bmatrix} 0 & 1 & 0 \\ 0 & 0 & -1 \\ -1 & 0 & 0 \end{bmatrix},
 \qquad \mathbf{p}^{\mathcal{R}} = \mathbf{C}\,\mathbf{p}^W = (p_E,\, -p_D,\, -p_N)
 \tag{CONV-4}
-$$
+```
 
 Because $\mathbf{C}$ is a proper rotation ($\det\mathbf{C} = +1$), a world-frame attitude maps to
-$\mathbf{C}\,\mathbf{R}\,\mathbf{C}^{\top}$, which in quaternion form is
+$\mathbf{C} \mathbf{R} \mathbf{C}^{\top}$, which in quaternion form is
 
-$$
+```math
 \mathbf{q}^{\mathcal{R}} = (q_0,\; q_2,\; -q_3,\; -q_1)
 \tag{CONV-5}
-$$
+```
 
 Meshes authored in body FRD coordinates go through the same $\mathbf{C}$, so positions and
 orientations always convert the same way ([#34](https://github.com/MatthewK84/MJKPhysics/issues/34)).
@@ -132,29 +132,29 @@ orientations always convert the same way ([#34](https://github.com/MatthewK84/MJ
 
 MJKPhysics uses **Hamilton** quaternions ($ij = k$), stored **scalar first**:
 
-$$
+```math
 \mathbf{q} = \begin{bmatrix} q_0 \\ \mathbf{q}_v \end{bmatrix}
 = \begin{bmatrix} \cos(\theta/2) \\ \mathbf{u}\,\sin(\theta/2) \end{bmatrix},
 \qquad \lVert \mathbf{q} \rVert = 1
 \tag{CONV-6}
-$$
+```
 
 This is a right-handed rotation by $\theta$ about the unit axis $\mathbf{u}$. The product is
 
-$$
+```math
 \mathbf{p}\otimes\mathbf{q} =
 \begin{bmatrix}
 p_0 q_0 - \mathbf{p}_v\cdot\mathbf{q}_v \\
 p_0\,\mathbf{q}_v + q_0\,\mathbf{p}_v + \mathbf{p}_v\times\mathbf{q}_v
 \end{bmatrix}
 \tag{CONV-7}
-$$
+```
 
 The attitude state is the unit quaternion $\mathbf{q}_{WB}$. It acts on vectors as
 $\mathbf{x}^W = \mathbf{q}_{WB}\otimes\mathbf{x}^B\otimes\mathbf{q}_{WB}^{\ast}$, using pure
 quaternions $(0, \mathbf{x})$, and corresponds to
 
-$$
+```math
 \mathbf{R}_{WB} =
 \begin{bmatrix}
 1 - 2(q_2^2 + q_3^2) & 2(q_1 q_2 - q_0 q_3) & 2(q_1 q_3 + q_0 q_2) \\
@@ -162,7 +162,7 @@ $$
 2(q_1 q_3 - q_0 q_2) & 2(q_2 q_3 + q_0 q_1) & 1 - 2(q_1^2 + q_2^2)
 \end{bmatrix}
 \tag{CONV-8}
-$$
+```
 
 Composition follows the matrix order: $\mathbf{q}_{WS} = \mathbf{q}_{WB}\otimes\mathbf{q}_{BS}$.
 $\mathbf{q}$ and $-\mathbf{q}$ are the same rotation. The state is never sign-flipped, to keep it
@@ -181,22 +181,22 @@ The angular velocity of the body relative to the world, resolved in body axes, i
 $\boldsymbol{\omega}^B = (p, q, r)$: roll, pitch and yaw rates. The italic scalar $q$ (pitch
 rate) is unrelated to the bold quaternion $\mathbf{q}$.
 
-$$
+```math
 \dot{\mathbf{q}}_{WB} = \tfrac{1}{2}\,\mathbf{q}_{WB}\otimes\begin{bmatrix} 0 \\ \boldsymbol{\omega}^B \end{bmatrix},
 \qquad
 \dot{\mathbf{R}}_{WB} = \mathbf{R}_{WB}\,[\boldsymbol{\omega}^B]_\times
 \tag{CONV-9}
-$$
+```
 
 The exponential map is $\operatorname{Exp}(\boldsymbol{\theta}) = (\cos\tfrac{\theta}{2},\,
 \tfrac{\boldsymbol{\theta}}{\theta}\sin\tfrac{\theta}{2})$ with $\theta = \lVert\boldsymbol{\theta}\rVert$.
 Increments and perturbations are applied **on the right**, in body axes:
 
-$$
+```math
 \mathbf{q}_{WB}(t + \Delta t) = \mathbf{q}_{WB}(t)\otimes\operatorname{Exp}(\boldsymbol{\omega}^B\,\Delta t)
 \quad\text{for constant } \boldsymbol{\omega}^B
 \tag{CONV-10}
-$$
+```
 
 Small-angle and $\theta\to 0$ handling of these maps is specified in
 [#9](https://github.com/MatthewK84/MJKPhysics/issues/9).
@@ -207,24 +207,24 @@ Euler angles never appear in the state and their rates are never integrated. The
 human-facing input and output: scenario files, logs, the HUD. The sequence is **3-2-1**: yaw
 $\psi$, then pitch $\theta$, then roll $\phi$, using elementary rotations that act on vectors:
 
-$$
+```math
 \mathbf{R}_{WB} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(\theta)\,\mathbf{R}_x(\phi)
 \tag{CONV-11}
-$$
+```
 
-$$
+```math
 \mathbf{R}_x(\phi) = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\phi & -\sin\phi \\ 0 & \sin\phi & \cos\phi \end{bmatrix},\;
 \mathbf{R}_y(\theta) = \begin{bmatrix} \cos\theta & 0 & \sin\theta \\ 0 & 1 & 0 \\ -\sin\theta & 0 & \cos\theta \end{bmatrix},\;
 \mathbf{R}_z(\psi) = \begin{bmatrix} \cos\psi & -\sin\psi & 0 \\ \sin\psi & \cos\psi & 0 \\ 0 & 0 & 1 \end{bmatrix}
-$$
+```
 
 Ranges are $\psi\in(-\pi,\pi]$, $\theta\in[-\tfrac{\pi}{2},\tfrac{\pi}{2}]$, $\phi\in(-\pi,\pi]$.
 Extraction, with $R_{ij}$ the entries of $\mathbf{R}_{WB}$:
 
-$$
+```math
 \theta = -\arcsin R_{31}, \qquad \phi = \operatorname{atan2}(R_{32}, R_{33}), \qquad \psi = \operatorname{atan2}(R_{21}, R_{11})
 \tag{CONV-12}
-$$
+```
 
 At $\lvert\theta\rvert = \tfrac{\pi}{2}$ only $\psi \mp \phi$ is defined. The convention there
 is $\phi = 0$ and $\psi = \operatorname{atan2}(-R_{12}, R_{22})$, which holds for both signs of
@@ -298,15 +298,15 @@ pressure $P$ in pascals, density $\rho$ in kg/m³, speed of sound $a$, dynamic v
   and output (`_rpm` suffix).
 - **Spin direction.** $s_i = +1$ for counter-clockwise and $s_i = -1$ for clockwise, both as seen
   from above (looking along $+\mathbf{z}_B$). The rotor's angular velocity is
-  $s_i\,\omega_i\,\mathbf{n}_i$.
+  $s_i \omega_i \mathbf{n}_i$.
 - **Yaw reaction.** The motor's reaction on the airframe opposes the torque that spins the rotor.
   A counter-clockwise rotor therefore produces a **positive** (nose-right) yaw moment:
 
-  $$
+  ```math
   \mathbf{M}_{\text{reaction},i}^B = -s_i\,Q_i\,\mathbf{n}_i^B
   \qquad\left(= +s_i\,Q_i\,\mathbf{z}_B \text{ for } \mathbf{n}_i = -\mathbf{z}_B\right)
   \tag{CONV-13}
-  $$
+  ```
 
   Here $Q_i \ge 0$ is the aerodynamic torque magnitude. To yaw right, speed up the
   counter-clockwise rotors.
@@ -320,17 +320,17 @@ Two nondimensionalisations are in common use, and they differ by large constant 
 data (UIUC Propeller Data Site; Brandt & Selig) uses revolutions per second $n$ and diameter $D$.
 Rotorcraft theory (Leishman) uses $\Omega$ and radius $R$:
 
-$$
+```math
 C_{T,\text{prop}} = \frac{T}{\rho n^2 D^4},\quad C_{P,\text{prop}} = \frac{P}{\rho n^3 D^5},\quad J = \frac{V}{nD}
 \qquad\qquad
 C_{T,\text{rotor}} = \frac{T}{\rho A (\Omega R)^2},\quad C_{P,\text{rotor}} = \frac{P}{\rho A (\Omega R)^3}
 \tag{CONV-14}
-$$
+```
 
-$$
+```math
 C_{T,\text{rotor}} = \frac{4}{\pi^3}\,C_{T,\text{prop}}, \qquad C_{P,\text{rotor}} = \frac{4}{\pi^4}\,C_{P,\text{prop}}
 \tag{CONV-15}
-$$
+```
 
 Code names them `ct_prop` and `ct_rotor` (likewise `cp_prop` and `cp_rotor`) and never uses a
 bare `ct`.
@@ -355,7 +355,7 @@ bare `ct`.
 - **Floating point.** The engine computes in `f64`. Transcendental functions go through `libm` so
   native and WebAssembly builds agree bit for bit
   ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
-- **Time.** Simulation time is an integer tick count; seconds are derived as $k\,\Delta t$ and
+- **Time.** Simulation time is an integer tick count; seconds are derived as $k \Delta t$ and
   never accumulated by repeated addition.
 
 ## 8. Interoperability
