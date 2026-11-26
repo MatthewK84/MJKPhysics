@@ -82,8 +82,8 @@ panic-related lints inside tests only, where a panic is simply a failing test.
 | 6 | **No recursion.** Use loops and explicit fixed-capacity stacks (for example in BVH traversal). | review: clippy has no lint for this |
 | 7 | **Small, focused functions.** At most 60 lines; prefer pure functions. | clippy `too_many_lines` (threshold in `clippy.toml`) |
 | 8 | **Declare all data.** Public items are documented; physical quantities carry units in their names (`mass_kg`, `omega_rad_s`). | `missing_docs`; review |
-| 9 | **One error model.** Fallible functions return `Result` with the crate's error type; numerical failures report sim time and quantity. Errors are never swallowed. | lints above; review |
-| 10 | **Macros stay simple.** `macro_rules!` only for trivial repetition; no procedural-macro dependencies in engine crates. | engine external-dependency allowlist in `xtask/src/layering.rs` |
+| 9 | **One error model.** Fallible functions return `Result<_, EngineError>` (`mjk-core`). Configuration errors name the exact field; numerical failures report sim time and quantity. Errors are never swallowed. | lints above; review |
+| 10 | **Macros stay simple.** `macro_rules!` only for trivial repetition. The only procedural macro in engine crates is serde's derive, for configuration types (ADR 0006). | engine external-dependency allowlist in `xtask/src/layering.rs` |
 
 Engine-specific rules:
 
@@ -98,9 +98,9 @@ Engine-specific rules:
 
 ## Crate layering and dependencies
 
-Crates form layers (`mjk-math` → … → `mjk-sim` → front ends). `cargo xtask layering` rejects any
-dependency outside a crate's allowed set, and engine crates may use only `libm`, `serde` and `toml`
-as external dependencies outside of tests. Adding a crate or an engine dependency means updating
+Crates form layers (`mjk-core` → `mjk-math` → … → `mjk-sim` → front ends). `cargo xtask layering`
+rejects any dependency outside a crate's allowed set, and engine crates may use only `libm`,
+`serde`, `serde_path_to_error` and `toml` as external dependencies outside of tests. Adding a crate or an engine dependency means updating
 the rule table in `xtask/src/layering.rs` and recording the decision in an architecture decision
 record ([#6](https://github.com/MatthewK84/MJKPhysics/issues/6)).
 

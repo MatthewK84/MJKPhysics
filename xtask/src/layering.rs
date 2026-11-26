@@ -83,6 +83,7 @@ impl fmt::Display for Violation {
 
 /// Engine crates: physics only, no I/O front ends, restricted external dependencies.
 pub const ENGINE: &[&str] = &[
+    "mjk-core",
     "mjk-math",
     "mjk-dynamics",
     "mjk-env",
@@ -94,23 +95,35 @@ pub const ENGINE: &[&str] = &[
 ];
 
 /// External crates engine crates may use outside of tests.
-pub const ENGINE_EXTERNAL_ALLOWED: &[&str] = &["libm", "serde", "toml"];
+/// See ADR 0001 and ADR 0006.
+pub const ENGINE_EXTERNAL_ALLOWED: &[&str] = &["libm", "serde", "serde_path_to_error", "toml"];
 
 /// Every workspace crate and the workspace crates it may depend on.
 pub const RULES: &[(&str, &[&str])] = &[
-    ("mjk-math", &[]),
-    ("mjk-dynamics", &["mjk-math"]),
-    ("mjk-env", &["mjk-math"]),
-    ("mjk-aero", &["mjk-math", "mjk-dynamics", "mjk-env"]),
-    ("mjk-contact", &["mjk-math", "mjk-dynamics"]),
-    ("mjk-control", &["mjk-math", "mjk-dynamics"]),
+    ("mjk-core", &[]),
+    ("mjk-math", &["mjk-core"]),
+    ("mjk-dynamics", &["mjk-core", "mjk-math"]),
+    ("mjk-env", &["mjk-core", "mjk-math"]),
+    (
+        "mjk-aero",
+        &["mjk-core", "mjk-math", "mjk-dynamics", "mjk-env"],
+    ),
+    ("mjk-contact", &["mjk-core", "mjk-math", "mjk-dynamics"]),
+    ("mjk-control", &["mjk-core", "mjk-math", "mjk-dynamics"]),
     (
         "mjk-sensors",
-        &["mjk-math", "mjk-dynamics", "mjk-env", "mjk-contact"],
+        &[
+            "mjk-core",
+            "mjk-math",
+            "mjk-dynamics",
+            "mjk-env",
+            "mjk-contact",
+        ],
     ),
     (
         "mjk-sim",
         &[
+            "mjk-core",
             "mjk-math",
             "mjk-dynamics",
             "mjk-env",

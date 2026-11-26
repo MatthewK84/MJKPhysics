@@ -17,5 +17,6 @@ number it sequentially.
 | [0003](0003-contact-solver.md) | Sequential impulses with warm starting and soft constraints for contact | Accepted |
 | [0004](0004-renderer-stack.md) | Rust physics compiled to WebAssembly, drawn by three.js with WebGPU | Accepted |
 | [0005](0005-documentation-math.md) | GitHub-native math syntax, rendered in the book by KaTeX | Accepted |
+| [0006](0006-errors-and-configuration.md) | One engine error type in `mjk-core`; configuration parsed from TOML text with exact field paths | Accepted |
 
 Status values: **Proposed**, **Accepted**, **Superseded by ADR NNNN**, **Rejected**.

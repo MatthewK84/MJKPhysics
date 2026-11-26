@@ -6,6 +6,7 @@
 
 - [Conventions and notation](conventions.md)
 - [Architecture](architecture.md)
+- [Configuration files](configuration.md)
 
 # Physics
 
@@ -21,6 +22,7 @@
   - [0003 Contact solver](adr/0003-contact-solver.md)
   - [0004 Renderer stack](adr/0004-renderer-stack.md)
   - [0005 Documentation math](adr/0005-documentation-math.md)
+  - [0006 Errors and configuration](adr/0006-errors-and-configuration.md)
 - [Writing documentation](writing-docs.md)
   - [Model page template](templates/model-page.md)
   - [Decision record template](templates/decision-record.md)

@@ -10,6 +10,7 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
+mjk-core.workspace = true
 mjk-math.workspace = true
 mjk-dynamics.workspace = true
 mjk-env.workspace = true
@@ -17,6 +18,9 @@ mjk-aero.workspace = true
 mjk-contact.workspace = true
 mjk-control.workspace = true
 mjk-sensors.workspace = true
+serde.workspace = true
+serde_path_to_error.workspace = true
+toml.workspace = true
 
 [lints]
 workspace = true

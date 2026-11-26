@@ -1,0 +1,11 @@
+schema_version = 1
+kind = "airframe"
+name = "Example quadrotor"
+
+[mass]
+cg_m = [0.0, 0.0, 0.01]
+inertia_kg_m2 = [
+  [0.0290, 0.0000, 0.0004],
+  [0.0000, 0.0300, 0.0000],
+  [0.0004, 0.0000, 0.0550],
+]

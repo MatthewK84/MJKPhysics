@@ -1,0 +1,15 @@
+[package]
+name = "mjk-core"
+description = "Foundation types shared by every MJKPhysics engine crate: the engine error model."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

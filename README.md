@@ -162,7 +162,8 @@ against an analytic result or published data.
 ```mermaid
 flowchart LR
   subgraph engine["Engine crates · no unsafe · no I/O · zero allocation per step"]
-    math["mjk-math"] --> dynamics["mjk-dynamics"]
+    core["mjk-core · errors"] --> math["mjk-math"]
+    math --> dynamics["mjk-dynamics"]
     math --> env["mjk-env"]
     dynamics --> aero["mjk-aero"]
     env --> aero
@@ -256,6 +257,7 @@ cargo xtask layering
 
 ```text
 crates/
+  mjk-core       engine error model, beneath every engine crate
   mjk-math       frame-tagged linear algebra, quaternions, SO(3)
   mjk-dynamics   rigid body, integrators, world loop, trim
   mjk-env        atmosphere, gravity, wind, turbulence

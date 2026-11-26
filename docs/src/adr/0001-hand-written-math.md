@@ -1,6 +1,7 @@
 # ADR 0001: Hand-written, frame-typed math
 
-- **Status:** Accepted
+- **Status:** Accepted. The external-dependency allowlist is amended by
+  [ADR 0006](0006-errors-and-configuration.md).
 - **Date:** 2026-11-26
 - **Issues:** [#8](https://github.com/MatthewK84/MJKPhysics/issues/8), [#9](https://github.com/MatthewK84/MJKPhysics/issues/9), [#2](https://github.com/MatthewK84/MJKPhysics/issues/2)
 

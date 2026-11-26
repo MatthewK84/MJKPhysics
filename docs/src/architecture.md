@@ -7,6 +7,8 @@ depend only on the layers beneath it, and `cargo xtask layering` enforces this o
 request.
 
 ```text
+                  mjk-core            engine error model (used by every engine crate)
+                     |
                   mjk-math            frame-tagged vectors, quaternions, SO(3)
                  /        \
        mjk-dynamics      mjk-env      rigid body, integrators, world loop | atmosphere, wind
@@ -25,20 +27,23 @@ request.
 ```
 
 The exact allowed edges are the rule table in `xtask/src/layering.rs`. Engine crates, everything
-from `mjk-math` to `mjk-sim`, may use only `libm`, `serde` and `toml` as external dependencies
-outside of tests ([ADR 0001](adr/0001-hand-written-math.md)).
+from `mjk-core` to `mjk-sim`, may use only `libm`, `serde`, `serde_path_to_error` and `toml` as
+external dependencies outside of tests ([ADR 0001](adr/0001-hand-written-math.md),
+[ADR 0006](adr/0006-errors-and-configuration.md)).
 
 ## Rules the engine follows
 
 - **No I/O in engine crates.** Files, terminals, sockets and the browser belong to front ends.
-  Engine crates take configuration as data and return results as data.
+  Engine crates take configuration as text and return results as data
+  ([Configuration files](configuration.md)).
 - **Fixed-step and deterministic.** Physics advances in fixed steps, with subsystems at integer
   rate divisors. The same inputs and seed produce bit-identical state on every platform
   ([ADR 0002](adr/0002-integrator-design.md)).
 - **No heap allocation per step.** Everything `World::step` needs is allocated when the world is
   built.
-- **No panics.** Fallible operations return `Result`. Numerical failures report the simulation
-  time and the offending quantity.
+- **No panics.** Fallible operations return `Result<_, EngineError>` from `mjk-core`.
+  Configuration errors name the exact field; numerical failures report the simulation time and
+  the offending quantity ([ADR 0006](adr/0006-errors-and-configuration.md)).
 - **Rendering never feeds back.** The viewer receives state snapshots and pilot inputs flow the
   other way; nothing the renderer does can change a simulated result
   ([ADR 0004](adr/0004-renderer-stack.md)).
