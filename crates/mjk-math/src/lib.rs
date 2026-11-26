@@ -13,18 +13,21 @@
 //! Frame markers are [`World`], [`Body`], [`Stability`] and [`Wind`]. Conventions follow the
 //! book's conventions page; code comments cite its equations, such as Eq. (CONV-8).
 //!
-//! Only `+ − × ÷` and `sqrt` are used, which IEEE 754 rounds exactly, so results are
-//! bit-identical on every platform. Transcendental functions arrive with the SO(3) maps (#9)
-//! and go through `libm`.
+//! Arithmetic and `sqrt` are rounded exactly by IEEE 754, and every transcendental function
+//! (`sin`, `cos`, `atan2`) goes through `libm`, so results are bit-identical on every platform.
+//! The SO(3) maps are in [`so3`]; Euler angles, for input and output only, are [`EulerAngles`].
 
 mod eigen;
+mod euler;
 mod frame;
 mod mat3;
 mod quat;
 mod rotation;
+pub mod so3;
 mod vec3;
 
 pub use eigen::{JACOBI_TOLERANCE, MAX_JACOBI_SWEEPS, SymmetricEigen};
+pub use euler::{EulerAngles, GIMBAL_LOCK_COS};
 pub use frame::{Body, Frame, Stability, Wind, World};
 pub use mat3::Mat3;
 pub use quat::{Quat, UnitQuat};

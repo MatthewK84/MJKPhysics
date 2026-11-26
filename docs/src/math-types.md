@@ -49,10 +49,10 @@ frame from the type the caller writes. After that, the compiler keeps the frames
 
 ## Numerics
 
-- **Exact arithmetic only.** The crate uses addition, subtraction, multiplication, division and
-  square roots, which IEEE 754 rounds exactly, so results are bit-identical on every platform,
-  including WebAssembly. Trigonometric functions arrive with the SO(3) maps
-  ([#9](https://github.com/MatthewK84/MJKPhysics/issues/9)) and go through `libm`.
+- **Bit-identical everywhere.** Arithmetic and square roots are rounded exactly by IEEE 754, and
+  every transcendental function (`sin`, `cos`, `atan2`) comes from `libm`, so results match on
+  every platform, including WebAssembly. The maps built on them are on the
+  [SO(3) maps](so3.md) page.
 - **Rotating a vector** uses $`\mathbf{v}' = \mathbf{v} + 2q_0(\mathbf{q}_v\times\mathbf{v}) + 2\,\mathbf{q}_v\times(\mathbf{q}_v\times\mathbf{v})`$,
   which equals $`\mathbf{q}\otimes\mathbf{v}\otimes\mathbf{q}^{\ast}`$ for a unit quaternion and is
   tested against the matrix form (CONV-8).

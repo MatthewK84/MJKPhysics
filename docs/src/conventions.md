@@ -226,7 +226,8 @@ Extraction, with $`R_{ij}`$ the entries of $`\mathbf{R}_{WB}`$:
 \qquad\text{(CONV-12)}
 ```
 
-At $`\lvert\theta\rvert = \tfrac{\pi}{2}`$ only $`\psi \mp \phi`$ is defined. The convention there
+The code evaluates these in an equivalent, better-conditioned form that stays exact near ±90°
+(SO3-11 on the [SO(3) maps](so3.md#euler-angles) page). At $`\lvert\theta\rvert = \tfrac{\pi}{2}`$ only $`\psi \mp \phi`$ is defined. The convention there
 is $`\phi = 0`$ and $`\psi = \mathrm{atan2}(-R_{12}, R_{22})`$, which holds for both signs of
 $`\theta`$.
 

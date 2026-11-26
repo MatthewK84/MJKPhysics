@@ -6,6 +6,7 @@
 
 - [Conventions and notation](conventions.md)
 - [Math types](math-types.md)
+- [SO(3) maps](so3.md)
 - [Architecture](architecture.md)
 - [Configuration files](configuration.md)
 

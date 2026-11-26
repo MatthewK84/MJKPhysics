@@ -150,6 +150,11 @@ impl UnitQuat {
         (norm.is_finite() && norm > 0.0).then(|| Self(q * (1.0 / norm)))
     }
 
+    /// Wraps a quaternion that is unit by construction (up to rounding), such as `Exp(θ)`.
+    pub(crate) const fn from_unit(q: Quat) -> Self {
+        Self(q)
+    }
+
     /// The underlying quaternion.
     #[must_use]
     pub const fn quat(self) -> Quat {

@@ -23,6 +23,9 @@ mjk-control = { path = "crates/mjk-control" }
 mjk-sensors = { path = "crates/mjk-sensors" }
 mjk-sim = { path = "crates/mjk-sim" }
 
+# Transcendental functions with bit-identical results on every platform (ADR 0001).
+libm = "0.2.16"
+
 # Configuration parsing in engine crates (ADR 0006).
 serde = { version = "1.0.229", features = ["derive"] }
 serde_path_to_error = "0.1.20"

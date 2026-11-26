@@ -10,6 +10,7 @@ planned pages so IDs never collide.
 | Model | Equation prefix | Issue |
 |---|---|---|
 | Conventions and notation | `CONV` | [#5](https://github.com/MatthewK84/MJKPhysics/issues/5), [page](../conventions.md) |
+| SO(3) maps | `SO3` | [#9](https://github.com/MatthewK84/MJKPhysics/issues/9), [page](../so3.md) |
 | Rigid-body dynamics | `RB` | [#10](https://github.com/MatthewK84/MJKPhysics/issues/10) |
 | Integrators, including the Lie-group method | `INT` | [#11](https://github.com/MatthewK84/MJKPhysics/issues/11), [#12](https://github.com/MatthewK84/MJKPhysics/issues/12) |
 | Atmosphere and gravity | `ATM` | [#15](https://github.com/MatthewK84/MJKPhysics/issues/15) |
