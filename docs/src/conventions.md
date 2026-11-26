@@ -80,7 +80,7 @@ world coordinates:
 \mathbf{R}_{WB} = \begin{bmatrix} \mathbf{x}_B^W & \mathbf{y}_B^W & \mathbf{z}_B^W \end{bmatrix},
 \qquad \mathbf{x}^W = \mathbf{R}_{WB}\,\mathbf{x}^B,
 \qquad \mathbf{R}_{BW} = \mathbf{R}_{WB}^{\top}
-\tag{CONV-1}
+\qquad\text{(CONV-1)}
 ```
 
 ### 2.3 Stability and wind axes
@@ -89,14 +89,14 @@ With the air-relative velocity resolved in body axes as $\mathbf{v}_a^B = (u_a, 
 airspeed $V_a = \lVert \mathbf{v}_a \rVert$:
 
 ```math
-\alpha = \operatorname{atan2}(w_a,\, u_a), \qquad \beta = \arcsin\!\left(\frac{v_a}{V_a}\right)
-\tag{CONV-2}
+\alpha = \mathrm{atan2}(w_a,\, u_a), \qquad \beta = \arcsin\!\left(\frac{v_a}{V_a}\right)
+\qquad\text{(CONV-2)}
 ```
 
 ```math
 \mathbf{R}_{BS} = \mathbf{R}_y(-\alpha), \qquad \mathbf{R}_{SA} = \mathbf{R}_z(\beta), \qquad
 \mathbf{v}_a^B = \mathbf{R}_{BS}\,\mathbf{R}_{SA} \begin{bmatrix} V_a \\ 0 \\ 0 \end{bmatrix}
-\tag{CONV-3}
+\qquad\text{(CONV-3)}
 ```
 
 Positive $\alpha$ means the relative wind meets the aircraft from below. Positive $\beta$ means it
@@ -112,7 +112,7 @@ coordinates:
 ```math
 \mathbf{C} = \begin{bmatrix} 0 & 1 & 0 \\ 0 & 0 & -1 \\ -1 & 0 & 0 \end{bmatrix},
 \qquad \mathbf{p}^{\mathcal{R}} = \mathbf{C}\,\mathbf{p}^W = (p_E,\, -p_D,\, -p_N)
-\tag{CONV-4}
+\qquad\text{(CONV-4)}
 ```
 
 Because $\mathbf{C}$ is a proper rotation ($\det\mathbf{C} = +1$), a world-frame attitude maps to
@@ -120,7 +120,7 @@ $\mathbf{C} \mathbf{R} \mathbf{C}^{\top}$, which in quaternion form is
 
 ```math
 \mathbf{q}^{\mathcal{R}} = (q_0,\; q_2,\; -q_3,\; -q_1)
-\tag{CONV-5}
+\qquad\text{(CONV-5)}
 ```
 
 Meshes authored in body FRD coordinates go through the same $\mathbf{C}$, so positions and
@@ -136,7 +136,7 @@ MJKPhysics uses **Hamilton** quaternions ($ij = k$), stored **scalar first**:
 \mathbf{q} = \begin{bmatrix} q_0 \\ \mathbf{q}_v \end{bmatrix}
 = \begin{bmatrix} \cos(\theta/2) \\ \mathbf{u}\,\sin(\theta/2) \end{bmatrix},
 \qquad \lVert \mathbf{q} \rVert = 1
-\tag{CONV-6}
+\qquad\text{(CONV-6)}
 ```
 
 This is a right-handed rotation by $\theta$ about the unit axis $\mathbf{u}$. The product is
@@ -147,7 +147,7 @@ This is a right-handed rotation by $\theta$ about the unit axis $\mathbf{u}$. Th
 p_0 q_0 - \mathbf{p}_v\cdot\mathbf{q}_v \\
 p_0\,\mathbf{q}_v + q_0\,\mathbf{p}_v + \mathbf{p}_v\times\mathbf{q}_v
 \end{bmatrix}
-\tag{CONV-7}
+\qquad\text{(CONV-7)}
 ```
 
 The attitude state is the unit quaternion $\mathbf{q}_{WB}$. It acts on vectors as
@@ -161,7 +161,7 @@ quaternions $(0, \mathbf{x})$, and corresponds to
 2(q_1 q_2 + q_0 q_3) & 1 - 2(q_1^2 + q_3^2) & 2(q_2 q_3 - q_0 q_1) \\
 2(q_1 q_3 - q_0 q_2) & 2(q_2 q_3 + q_0 q_1) & 1 - 2(q_1^2 + q_2^2)
 \end{bmatrix}
-\tag{CONV-8}
+\qquad\text{(CONV-8)}
 ```
 
 Composition follows the matrix order: $\mathbf{q}_{WS} = \mathbf{q}_{WB}\otimes\mathbf{q}_{BS}$.
@@ -185,17 +185,17 @@ rate) is unrelated to the bold quaternion $\mathbf{q}$.
 \dot{\mathbf{q}}_{WB} = \tfrac{1}{2}\,\mathbf{q}_{WB}\otimes\begin{bmatrix} 0 \\ \boldsymbol{\omega}^B \end{bmatrix},
 \qquad
 \dot{\mathbf{R}}_{WB} = \mathbf{R}_{WB}\,[\boldsymbol{\omega}^B]_\times
-\tag{CONV-9}
+\qquad\text{(CONV-9)}
 ```
 
-The exponential map is $\operatorname{Exp}(\boldsymbol{\theta}) = (\cos\tfrac{\theta}{2},\,
+The exponential map is $\mathrm{Exp}(\boldsymbol{\theta}) = (\cos\tfrac{\theta}{2},\,
 \tfrac{\boldsymbol{\theta}}{\theta}\sin\tfrac{\theta}{2})$ with $\theta = \lVert\boldsymbol{\theta}\rVert$.
 Increments and perturbations are applied **on the right**, in body axes:
 
 ```math
-\mathbf{q}_{WB}(t + \Delta t) = \mathbf{q}_{WB}(t)\otimes\operatorname{Exp}(\boldsymbol{\omega}^B\,\Delta t)
+\mathbf{q}_{WB}(t + \Delta t) = \mathbf{q}_{WB}(t)\otimes\mathrm{Exp}(\boldsymbol{\omega}^B\,\Delta t)
 \quad\text{for constant } \boldsymbol{\omega}^B
-\tag{CONV-10}
+\qquad\text{(CONV-10)}
 ```
 
 Small-angle and $\theta\to 0$ handling of these maps is specified in
@@ -209,7 +209,7 @@ $\psi$, then pitch $\theta$, then roll $\phi$, using elementary rotations that a
 
 ```math
 \mathbf{R}_{WB} = \mathbf{R}_z(\psi)\,\mathbf{R}_y(\theta)\,\mathbf{R}_x(\phi)
-\tag{CONV-11}
+\qquad\text{(CONV-11)}
 ```
 
 ```math
@@ -222,12 +222,12 @@ Ranges are $\psi\in(-\pi,\pi]$, $\theta\in[-\tfrac{\pi}{2},\tfrac{\pi}{2}]$, $\p
 Extraction, with $R_{ij}$ the entries of $\mathbf{R}_{WB}$:
 
 ```math
-\theta = -\arcsin R_{31}, \qquad \phi = \operatorname{atan2}(R_{32}, R_{33}), \qquad \psi = \operatorname{atan2}(R_{21}, R_{11})
-\tag{CONV-12}
+\theta = -\arcsin R_{31}, \qquad \phi = \mathrm{atan2}(R_{32}, R_{33}), \qquad \psi = \mathrm{atan2}(R_{21}, R_{11})
+\qquad\text{(CONV-12)}
 ```
 
 At $\lvert\theta\rvert = \tfrac{\pi}{2}$ only $\psi \mp \phi$ is defined. The convention there
-is $\phi = 0$ and $\psi = \operatorname{atan2}(-R_{12}, R_{22})$, which holds for both signs of
+is $\phi = 0$ and $\psi = \mathrm{atan2}(-R_{12}, R_{22})$, which holds for both signs of
 $\theta$.
 
 ### 3.4 Positive rotations and moments
@@ -305,7 +305,7 @@ pressure $P$ in pascals, density $\rho$ in kg/m³, speed of sound $a$, dynamic v
   ```math
   \mathbf{M}_{\text{reaction},i}^B = -s_i\,Q_i\,\mathbf{n}_i^B
   \qquad\left(= +s_i\,Q_i\,\mathbf{z}_B \text{ for } \mathbf{n}_i = -\mathbf{z}_B\right)
-  \tag{CONV-13}
+  \qquad\text{(CONV-13)}
   ```
 
   Here $Q_i \ge 0$ is the aerodynamic torque magnitude. To yaw right, speed up the
@@ -324,12 +324,12 @@ Rotorcraft theory (Leishman) uses $\Omega$ and radius $R$:
 C_{T,\text{prop}} = \frac{T}{\rho n^2 D^4},\quad C_{P,\text{prop}} = \frac{P}{\rho n^3 D^5},\quad J = \frac{V}{nD}
 \qquad\qquad
 C_{T,\text{rotor}} = \frac{T}{\rho A (\Omega R)^2},\quad C_{P,\text{rotor}} = \frac{P}{\rho A (\Omega R)^3}
-\tag{CONV-14}
+\qquad\text{(CONV-14)}
 ```
 
 ```math
 C_{T,\text{rotor}} = \frac{4}{\pi^3}\,C_{T,\text{prop}}, \qquad C_{P,\text{rotor}} = \frac{4}{\pi^4}\,C_{P,\text{prop}}
-\tag{CONV-15}
+\qquad\text{(CONV-15)}
 ```
 
 Code names them `ct_prop` and `ct_rotor` (likewise `cp_prop` and `cp_rotor`) and never uses a
