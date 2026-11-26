@@ -25,6 +25,29 @@ mjk-sim = { path = "crates/mjk-sim" }
 # Tooling only (xtask); engine crates may not depend on this.
 serde_json = "1.0.154"
 
+# Coding standard: see CONTRIBUTING.md for the rationale behind each rule.
 [workspace.lints.rust]
 unsafe_code = "forbid"
 missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# No panicking shortcuts outside tests (clippy.toml allows them inside tests).
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
+# Numerics: no exact float comparison, no silent `as` casts.
+float_cmp = "deny"
+float_cmp_const = "deny"
+as_conversions = "deny"
+# Hygiene.
+dbg_macro = "deny"
+exit = "deny"
+mem_forget = "deny"
+rc_mutex = "deny"

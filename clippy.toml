@@ -1,0 +1,8 @@
+# Panicking shortcuts are acceptable inside tests, where a panic is a test failure.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+
+# Keep functions small and single-purpose (pedantic `too_many_lines`).
+too-many-lines-threshold = 60
