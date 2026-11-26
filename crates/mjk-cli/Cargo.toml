@@ -1,0 +1,20 @@
+[package]
+name = "mjk-cli"
+description = "The mjk command-line tool: runs, validation and analysis for MJKPhysics."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "mjk"
+path = "src/main.rs"
+
+[dependencies]
+mjk-sim.workspace = true
+
+[lints]
+workspace = true
