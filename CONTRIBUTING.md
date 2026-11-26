@@ -89,7 +89,8 @@ Engine-specific rules:
 - **Transcendental functions go through `libm`**, so native and WebAssembly builds produce
   identical bits ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
 - **Conventions are fixed**: NED world frame, FRD body frame, Hamilton scalar-first quaternions,
-  SI units ([#5](https://github.com/MatthewK84/MJKPhysics/issues/5)).
+  SI units with unit suffixes. Use the symbols and equation IDs in
+  [`docs/src/conventions.md`](docs/src/conventions.md).
 
 ## Crate layering and dependencies
 

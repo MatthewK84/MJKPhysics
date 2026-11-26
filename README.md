@@ -115,8 +115,9 @@ or mass-property data are out of scope until such data exists.
 
 ## Conventions
 
-Convention errors are the most common simulator bug, so they are fixed before any math is written
-([#5](https://github.com/MatthewK84/MJKPhysics/issues/5)):
+Convention errors are the most common simulator bug, so they are fixed before any math is written.
+The full specification, with equations, sign tables and the symbol table, is
+[`docs/src/conventions.md`](docs/src/conventions.md). In short:
 
 - **Frames:** world is local-level **NED** (flat earth); body is **FRD**; stability and wind axes
   follow Stevens, Lewis & Johnson. Conversion to the renderer's Y-up frame happens in exactly one place.
