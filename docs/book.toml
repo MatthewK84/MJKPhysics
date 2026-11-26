@@ -1,0 +1,23 @@
+[book]
+title = "MJKPhysics"
+description = "Validated six-degree-of-freedom flight dynamics for small unmanned aircraft."
+authors = ["The MJKPhysics contributors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+# Fail the build if SUMMARY.md links to a page that does not exist.
+create-missing = false
+
+[output.html]
+site-url = "/MJKPhysics/"
+git-repository-url = "https://github.com/MatthewK84/MJKPhysics"
+edit-url-template = "https://github.com/MatthewK84/MJKPhysics/edit/main/docs/{path}"
+preferred-dark-theme = "navy"
+# Math uses GitHub's syntax and is rendered in the browser by KaTeX (see ADR 0005).
+additional-css = ["theme/math.css"]
+additional-js = ["theme/math.js"]
+
+[output.html.search]
+enable = true

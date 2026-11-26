@@ -1,0 +1,86 @@
+# Builds the book on every pull request and publishes it to GitHub Pages from main.
+# The live demo (#83) will join the same Pages artifact under /demo/ (ADR 0004).
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+
+jobs:
+  build:
+    name: Docs site
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Check equation IDs and citations
+        run: cargo xtask equations
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - name: Type-check the book's math renderer
+        run: |
+          npm ci --prefix viewer
+          viewer/node_modules/.bin/tsc -p docs/theme
+      - uses: taiki-e/install-action@893d6ee8d714b6c7dfe2bcd94e5759e9a7958a7e # v2.90.10
+        with:
+          tool: mdbook@0.5.4
+      - name: Build the book
+        run: mdbook build docs
+      - name: Upload the book for GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs/book
+
+  deploy:
+    name: Publish to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Check that GitHub Pages publishes from Actions
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '.build_type' 2>/dev/null || true)
+          if [ "$build_type" = "workflow" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=GitHub Pages is not set up::Settings > Pages > Source must be 'GitHub Actions'. The book was built but not published."
+          fi
+      - name: Deploy
+        id: deployment
+        if: steps.pages.outputs.enabled == 'true'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,0 +1,23 @@
+/* Display equations rendered by theme/math.js. */
+.mjk-math-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25em 0;
+}
+
+/* Keep linked equations clear of mdBook's fixed menu bar. */
+.mjk-math-display[id] {
+  scroll-margin-top: calc(var(--menu-bar-height, 50px) + 1em);
+}
+
+.mjk-math-display:target {
+  outline: 2px solid var(--links);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.mjk-math-error {
+  color: #c0392b;
+  font-family: var(--mono-font, monospace);
+}

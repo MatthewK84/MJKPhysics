@@ -1,0 +1,26 @@
+# Summary
+
+[Introduction](README.md)
+
+# Foundations
+
+- [Conventions and notation](conventions.md)
+- [Architecture](architecture.md)
+
+# Physics
+
+- [Models](models/README.md)
+- [Validation](validation/README.md)
+- [Airframes](airframes/README.md)
+
+# Project
+
+- [Decision records](adr/README.md)
+  - [0001 Hand-written math](adr/0001-hand-written-math.md)
+  - [0002 Integrator design](adr/0002-integrator-design.md)
+  - [0003 Contact solver](adr/0003-contact-solver.md)
+  - [0004 Renderer stack](adr/0004-renderer-stack.md)
+  - [0005 Documentation math](adr/0005-documentation-math.md)
+- [Writing documentation](writing-docs.md)
+  - [Model page template](templates/model-page.md)
+  - [Decision record template](templates/decision-record.md)

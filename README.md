@@ -39,6 +39,7 @@ fixed-wing aircraft.
 
 ## Contents
 
+- [Documentation](#documentation)
 - [Why this exists](#why-this-exists)
 - [Design principles](#design-principles)
 - [What is modelled](#what-is-modelled)
@@ -53,6 +54,14 @@ fixed-wing aircraft.
 - [References](#references)
 - [Acknowledgements and trademarks](#acknowledgements-and-trademarks)
 - [License](#license)
+
+## Documentation
+
+The engineering book is published at **<https://matthewk84.github.io/MJKPhysics/>**, with its
+source in [`docs/`](docs/). It covers conventions and notation, architecture, decision records
+for the major design choices, and, as they land, one page per physical model with its equations,
+assumptions, validity range, sources and validation. Equations have stable IDs, such as
+`CONV-9`, that code comments cite and CI checks.
 
 ## Why this exists
 
