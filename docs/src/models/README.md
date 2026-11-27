@@ -11,6 +11,7 @@ planned pages so IDs never collide.
 |---|---|---|
 | Conventions and notation | `CONV` | [#5](https://github.com/MatthewK84/MJKPhysics/issues/5), [page](../conventions.md) |
 | SO(3) maps | `SO3` | [#9](https://github.com/MatthewK84/MJKPhysics/issues/9), [page](../so3.md) |
+| Analytic validation | `VAL` | [#16](https://github.com/MatthewK84/MJKPhysics/issues/16), [page](../validation/README.md#analytic-checks) |
 | Determinism and replay | `DET` | [#14](https://github.com/MatthewK84/MJKPhysics/issues/14), [page](../determinism.md) |
 | Rigid-body dynamics | `RB` | [#10](https://github.com/MatthewK84/MJKPhysics/issues/10), [page](rigid-body.md) |
 | Integrators, including the Lie-group method | `INT` | [#11](https://github.com/MatthewK84/MJKPhysics/issues/11), [#12](https://github.com/MatthewK84/MJKPhysics/issues/12), [page](integrators.md) |

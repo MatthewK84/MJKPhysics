@@ -12,8 +12,9 @@ every parameter, and how the implementation was checked.
 > [rigid-body dynamics](models/rigid-body.md) and the [integrators](models/integrators.md),
 > including the Lie-group method, the [world loop](architecture.md#one-simulation-step),
 > [determinism and replay](determinism.md), and [gravity and the standard
-> atmosphere](models/atmosphere.md) are done, and the analytic validation suite
-> ([#16](https://github.com/MatthewK84/MJKPhysics/issues/16)) is next. The book grows with the
+> atmosphere](models/atmosphere.md), and the [analytic validation
+> suite](validation/README.md#analytic-checks) are done, and the command-line tool and log writer
+> ([#17](https://github.com/MatthewK84/MJKPhysics/issues/17)) are next. The book grows with the
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 
