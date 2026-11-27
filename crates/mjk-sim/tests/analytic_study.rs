@@ -75,10 +75,15 @@ fn the_elliptic_integral_matches_40_digit_values() {
         (0.0, core::f64::consts::FRAC_PI_2),
         (0.5, 1.854_074_677_301_371_9),
         (0.81, 2.280_549_138_422_770_2),
+        // The largest double below 1, the slowest case for the mean.
+        (1.0 - f64::EPSILON / 2.0, 19.754_694_645_958_44),
     ];
     for (k_squared, expected) in cases {
         let k = complete_elliptic_k(k_squared).expect("in range");
-        assert!((k - expected).abs() < 1e-15, "K({k_squared}) = {k}");
+        assert!(
+            ((k - expected) / expected).abs() <= 2.0 * f64::EPSILON,
+            "K({k_squared}) = {k}"
+        );
     }
     for k_squared in [1.0, -0.1, f64::NAN, 2.0] {
         assert_eq!(complete_elliptic_k(k_squared), None, "{k_squared}");
