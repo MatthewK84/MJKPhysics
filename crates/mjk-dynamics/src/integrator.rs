@@ -125,3 +125,57 @@ impl<S: LieSystem> Integrator<S> for Rkmk4 {
         system.retract(y, &u)
     }
 }
+
+/// An integrator chosen at run time, for example from a scenario file.
+///
+/// Dispatches with `match` rather than a trait object (Power of Ten rule 9). Every method is
+/// available, so the system must offer a Lie-group chart for [`Rkmk4`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum IntegratorKind {
+    /// [`ExplicitEuler`].
+    ExplicitEuler,
+    /// [`SemiImplicitEuler`].
+    SemiImplicitEuler,
+    /// [`Rk4`].
+    Rk4,
+    /// [`Rkmk4`].
+    Rkmk4,
+}
+
+impl IntegratorKind {
+    /// Every method.
+    pub const ALL: [Self; 4] = [
+        Self::ExplicitEuler,
+        Self::SemiImplicitEuler,
+        Self::Rk4,
+        Self::Rkmk4,
+    ];
+
+    /// The name used in scenario files.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::ExplicitEuler => "explicit-euler",
+            Self::SemiImplicitEuler => "semi-implicit-euler",
+            Self::Rk4 => "rk4",
+            Self::Rkmk4 => "rkmk4",
+        }
+    }
+
+    /// The method with this scenario-file name, if there is one.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|kind| kind.name() == name)
+    }
+}
+
+impl<S: LieSystem> Integrator<S> for IntegratorKind {
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates {
+        match self {
+            Self::ExplicitEuler => ExplicitEuler.step(system, time_s, y, dt_s),
+            Self::SemiImplicitEuler => SemiImplicitEuler.step(system, time_s, y, dt_s),
+            Self::Rk4 => Rk4.step(system, time_s, y, dt_s),
+            Self::Rkmk4 => Rkmk4.step(system, time_s, y, dt_s),
+        }
+    }
+}

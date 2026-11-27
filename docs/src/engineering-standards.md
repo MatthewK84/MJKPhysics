@@ -67,7 +67,9 @@ Implementing `GlobalAlloc` is unsafe by definition, so that allocator is the rep
 `unsafe` code. It lives in a test-support crate, `mjk-alloc-counter`: every method forwards to the
 system allocator unchanged, each unsafe block carries a `SAFETY:` comment that Clippy requires,
 and the layering check lets crates use it only as a development dependency. Every other crate
-forbids `unsafe` outright.
+forbids `unsafe` outright. Because Cargo cannot override one workspace lint, the crate repeats
+the whole lint table, and `cargo xtask standards` fails if the copy differs from the workspace's
+in anything but `unsafe_code` and the `SAFETY:` comment rule.
 
 ### Nesting
 
@@ -146,7 +148,9 @@ $`(2/q_0)(1 - n^2/3)`$, which has the same truncation order and no equivalent mu
 The project writes American English. `typos`, with its US locale, runs on every change and fails
 on misspellings and on British spellings, in prose and inside identifiers: a British spelling in
 the middle of a function name fails as readily as one in a sentence. Project terms such as NED and
-SITL, and the name Shepperd, are allowed in `typos.toml`.
+SITL, and the name Shepperd, are allowed in `typos.toml`. A British spelling that is also an
+American word passes: *disc* is American English for a compact disc, so the rotor *disk* is left
+to review (below).
 
 ## Supply chain
 
@@ -192,3 +196,4 @@ will follow the same principles with `ruff` and `mypy --strict`, in CI from its 
 | Units in names of physical quantities (`mass_kg`, `omega_rad_s`) | Names carry meaning a linter cannot infer |
 | Recursion in TypeScript | ESLint has no call-graph rule |
 | `@returns` on JavaScript functions | ESLint's return-type rules read TypeScript syntax only |
+| *Disk*, not *disc*, for the rotor disk and disk loading | *Disc* is also American English, so `typos` accepts it |

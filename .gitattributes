@@ -1,0 +1,5 @@
+# Check out every text file with LF line endings on every platform. Snapshot tests compare
+# program output with files in the repository byte for byte, so a CRLF checkout on Windows fails
+# them although every number matches.
+* text=auto eol=lf
+*.png binary

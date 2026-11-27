@@ -5,9 +5,11 @@
 //! - Rules 2, 8 and 9: bounded loops, no macros or conditional compilation, no trait objects or
 //!   function pointers, in every workspace crate.
 //! - Rule 5: assertion density per crate, reported but not enforced.
+//! - The allocation counter's repeated lint table still matches the workspace's.
 
 mod callgraph;
 mod ir_build;
+mod lint_table;
 mod source;
 
 use std::fs;
@@ -38,7 +40,11 @@ const RECURSION_EXEMPT: &[&str] = &["xtask"];
 pub fn run(root: &Path) -> Result<usize, String> {
     let source_problems = run_source_checks(root)?;
     let recursion_problems = run_recursion_check(root)?;
-    Ok(source_problems + recursion_problems)
+    let table_problems = lint_table::check(root)?;
+    for problem in &table_problems {
+        eprintln!("lint table: {problem}");
+    }
+    Ok(source_problems + recursion_problems + table_problems.len())
 }
 
 /// Every workspace source tree, as (crate, directory).

@@ -203,6 +203,10 @@ resolves motor time constants of tens of milliseconds and every body mode with a
 - **One trait, static dispatch.** `Integrator::step` is generic over the `System`, so the
   compiler specializes each combination; no trait objects (Power of Ten rule 9) and no
   allocation.
+- **Choosing a method at run time.** `IntegratorKind` names each method (`explicit-euler`,
+  `semi-implicit-euler`, `rk4`, `rkmk4`) for scenario files and dispatches with a `match`, so a
+  method chosen from a file still needs no trait object. It steps exactly like the method it
+  names, to the bit.
 - **Coordinates hold their own rates.** The same type is used for $`\mathbf{y}`$ and
   $`\dot{\mathbf{y}}`$. Its fields are named for the quantity (`position`, `velocity`,
   `attitude`, `angular_velocity`) without units, because the units differ between the two uses.
@@ -226,6 +230,7 @@ resolves motor time constants of tens of milliseconds and every body mode with a
 | RKMK4: steady spin about a principal axis (INT-8) | RKMK4 error below $`10^{-13}`$ rad; RK4 above $`10^{-9}`$ rad | `rkmk4_is_exact_for_steady_spin_about_a_principal_axis` |
 | RKMK4: measured order on the oscillator and on the tumbling body | within $`\pm 0.2`$ of 4 | `measured_order_on_an_oscillator`, `measured_order_on_a_tumbling_body` |
 | RKMK4: unit norm over $`10^5`$ steps with no renormalization | $`\lvert\lVert\mathbf{q}\rVert - 1\rvert < 10^{-12}`$ | `rkmk4_keeps_a_unit_quaternion_without_renormalizing` |
+| A method chosen at run time steps like the method itself; names round-trip | bit-identical after 50 steps, for all four | `a_method_chosen_at_run_time_steps_exactly_like_the_method_itself` |
 | The published study table matches the code | identical | `the_published_table_matches_the_code`, `validate_is_byte_identical_and_matches_the_book` |
 
 The acceptance tolerance for every measured order is $`\pm 0.2`$.

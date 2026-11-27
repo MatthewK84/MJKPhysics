@@ -18,6 +18,8 @@ Commit subjects are imperative and under about 72 characters ("Add RK4 integrato
 Write American English everywhere: code, comments, docs, commit messages and issues. CI runs
 `typos` with the US locale, which rejects British spellings, including inside identifiers. Text
 between `typos: off` and `typos: on` markers is not checked; use them only for quoted material.
+`typos` cannot reject a British spelling that is also an American word: *disc* passes (a compact
+disc), so reviewers check that the rotor *disk* and disk loading are spelled with a *k*.
 
 ## Running the checks locally
 
@@ -144,7 +146,9 @@ implementing `GlobalAlloc` is unsafe by definition. That one `unsafe impl` lives
 test-support crate, which sets `unsafe_code = "deny"` instead of `"forbid"`, allows it on the
 impl alone, and requires a `SAFETY:` comment on every unsafe block. The layering check lets any
 crate use it as a development dependency and no crate use it for anything else, so it never
-reaches a build that ships.
+reaches a build that ships. Cargo cannot override a single workspace lint, so the crate repeats
+the whole lint table; `cargo xtask standards` fails if that copy drifts from the workspace's in
+anything but those two lints.
 
 ### Mutation testing
 

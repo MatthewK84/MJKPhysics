@@ -25,3 +25,6 @@ Common corrections:
 
 Exceptions: keep the published spelling of quoted titles in references, proper nouns and names,
 and identifiers defined by external code or standards.
+
+`typos` cannot catch every case. *Disc* is also an American word (a compact disc, a disc brake), so
+it passes the check: write *disk* for the rotor disk and disk loading, and look for it in review.

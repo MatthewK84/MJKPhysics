@@ -25,7 +25,8 @@ mod wrench;
 
 pub use clock::{Clock, DEFAULT_PHYSICS_HZ, Rate, RateError};
 pub use integrator::{
-    Coordinates, ExplicitEuler, Integrator, LieSystem, Rk4, Rkmk4, SemiImplicitEuler, System,
+    Coordinates, ExplicitEuler, Integrator, IntegratorKind, LieSystem, Rk4, Rkmk4,
+    SemiImplicitEuler, System,
 };
 pub use rigid_body::{RigidBodyState, StateDerivative, derivative};
 pub use rigid_body_system::{

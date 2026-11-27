@@ -5,8 +5,9 @@ use std::ops::{Add, Mul};
 
 use mjk_dynamics::mass::MassProperties;
 use mjk_dynamics::{
-    Coordinates, ExplicitEuler, Integrator, LieSystem, LoadModel, Loads, RigidBodyCoordinates,
-    RigidBodyState, RigidBodySystem, RigidBodyTangent, Rk4, Rkmk4, SemiImplicitEuler, System,
+    Coordinates, ExplicitEuler, Integrator, IntegratorKind, LieSystem, LoadModel, Loads,
+    RigidBodyCoordinates, RigidBodyState, RigidBodySystem, RigidBodyTangent, Rk4, Rkmk4,
+    SemiImplicitEuler, System,
 };
 use mjk_math::{Body, Mat3, Quat, Rotation, UnitQuat, Vec3, World};
 
@@ -505,4 +506,25 @@ fn stages_are_evaluated_at_their_own_times() {
     ] {
         assert!((y.velocity.z - 1.0).abs() < 1e-15, "{y:?}");
     }
+}
+
+#[test]
+fn a_method_chosen_at_run_time_steps_exactly_like_the_method_itself() {
+    let system = tumbling_body().expect("physical");
+    let y0 = start(Vec3::new(1.0, 0.0, 0.0), Vec3::new(1.0, 0.5, 2.0));
+    let direct = [
+        run(&ExplicitEuler, &system, y0, 0.01, 50),
+        run(&SemiImplicitEuler, &system, y0, 0.01, 50),
+        run(&Rk4, &system, y0, 0.01, 50),
+        run(&Rkmk4, &system, y0, 0.01, 50),
+    ];
+    for (kind, expected) in IntegratorKind::ALL.iter().zip(direct) {
+        assert_eq!(run(kind, &system, y0, 0.01, 50), expected, "{kind:?}");
+    }
+    let names = ["explicit-euler", "semi-implicit-euler", "rk4", "rkmk4"];
+    for (kind, name) in IntegratorKind::ALL.iter().zip(names) {
+        assert_eq!(kind.name(), name);
+        assert_eq!(IntegratorKind::from_name(name), Some(*kind));
+    }
+    assert_eq!(IntegratorKind::from_name("rk45"), None);
 }

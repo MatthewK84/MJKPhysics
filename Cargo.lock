@@ -613,6 +613,7 @@ dependencies = [
  "rustc-demangle",
  "serde_json",
  "syn",
+ "toml",
 ]
 
 [[package]]
