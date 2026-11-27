@@ -3,9 +3,11 @@
 ## Workflow: pull requests only
 
 `main` is protected by `.github/rulesets/main.json`: nothing is pushed to it directly. Each change
-goes on a short-lived branch from `main` and arrives as a pull request with auto-merge turned on
-(rebase). It merges once all fourteen required checks pass, and GitHub deletes the branch. Keep one
-pull request open at a time, so each is tested against the current `main`. If a job in
+goes on a short-lived branch from `main` and arrives as a pull request. When all fourteen required
+checks pass, report the results and stop: the repository owner reviews the pull request, confirms
+CI is clean and merges it by rebase. Never merge a pull request and never turn on auto-merge; the
+owner's merge is the review, since GitHub does not let authors approve their own pull requests.
+Keep one pull request open at a time, so each is tested against the current `main`. If a job in
 `.github/workflows/` is added, renamed or removed, update the ruleset file in the same pull request;
 `cargo xtask standards` fails until they agree, and a repository admin re-imports the file.
 

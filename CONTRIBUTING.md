@@ -12,8 +12,9 @@ enforced by tools wherever a tool can enforce them, and by review where none can
    protected (below).
 3. Open a pull request that says `Closes #N`, ticks the issue's acceptance criteria and explains
    how each was verified.
-4. Turn on auto-merge. The pull request is rebased onto `main` once all fourteen required checks
-   pass, and GitHub then deletes its branch. History stays linear.
+4. When all fourteen required checks pass, the maintainer reviews the pull request, confirms CI
+   is clean and merges it by rebase, then deletes its branch. History stays linear. Auto-merge
+   stays off, so every change has a person's review before it reaches `main`.
 
 Commit subjects are imperative and under about 72 characters ("Add RK4 integrator", not "Added").
 
@@ -104,7 +105,8 @@ Scheduled workflows, which only run from the default branch:
 [`.github/rulesets/main.json`](.github/rulesets/main.json), versioned here so it can be reviewed:
 
 - **No direct pushes:** every change arrives through a pull request, merged by rebase. No
-  approvals are required, because GitHub does not let authors approve their own pull requests.
+  approvals are required, because GitHub does not let authors approve their own pull requests;
+  the maintainer's merge is the review.
 - **Checks first:** the fourteen checks in the table above must pass on a branch that is up to
   date with `main`.
 - **History is fixed:** `main` cannot be force-pushed or deleted, and history stays linear.
@@ -117,9 +119,10 @@ the ruleset leaves out. It also fails if the file gains a bypass actor or stops 
 Jobs with their own `if:`, such as the Pages publish, and scheduled workflows are not required.
 
 GitHub does not apply the file by itself; a repository admin imports it (Settings → Rules →
-Rulesets → New ruleset → Import a ruleset) and, under Settings → General, enables *Allow
-auto-merge* and *Automatically delete head branches*. A change to the file is applied the same
-way.
+Rulesets → New ruleset → Import a ruleset). A change to the file is applied the same way.
+
+Rebase merges are not signed by GitHub, even when the commits on the branch are. If signed commits
+are ever required, merging would have to switch to squash, which GitHub does sign.
 
 ## Engineering standards
 
