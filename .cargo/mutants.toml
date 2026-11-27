@@ -41,6 +41,8 @@ exclude_re = [
     # default (zero) loads, and the time passed to each step cannot change any result.
     'validation/integrators\.rs:.*replace <impl LoadModel for TorqueFree>::loads -> Loads with Default::default\(\)$',
     'validation/integrators\.rs:.*replace \* with [+/] in integrate$',
+    # The analytic suite's torque-free body is the same: its loads are the default (zero) loads.
+    'analytic/bodies\.rs:.*replace <impl LoadModel for TorqueFree>::loads -> Loads with Default::default\(\)$',
 ]
 
 # Release-like timing is unnecessary; tests are fast, so a mutant that makes one loop forever
