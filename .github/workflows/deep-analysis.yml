@@ -78,7 +78,9 @@ jobs:
           g++ -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -Iinclude
           ar rcs PractRand.a ./*.o
           g++ -o RNG_test tools/RNG_test.cpp PractRand.a -O3 -Iinclude -Itools -pthread
-      - name: Eight streams of one run, interleaved, to 32 GB; any FAIL fails
+      - name: Eight streams of one run, interleaved, to 32 GB; any FAIL, or stopping short, fails
+        # pipefail: without it the step takes tee's exit status, so a crash would pass.
+        shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           target/release/mjk random 14 gyro accelerometer pilot magnetometer barometer gnss \
             turbulence gust --bytes 40000000000 \
@@ -86,6 +88,11 @@ jobs:
             | tee "$RUNNER_TEMP/practrand.txt"
           if grep -q "FAIL" "$RUNNER_TEMP/practrand.txt"; then
             echo "PractRand found the interleaved streams distinguishable from random."
+            exit 1
+          fi
+          # PractRand reports at each doubling of length; the last report must be at 32 GB.
+          if ! grep -qF "length= 32 gigabytes (2^35 bytes)" "$RUNNER_TEMP/practrand.txt"; then
+            echo "PractRand stopped before 32 GB, so the streams were not fully tested."
             exit 1
           fi
       - name: Report PractRand's results in the job summary
