@@ -7,6 +7,7 @@ use std::process::{Command, Output};
 const INTEGRATORS: &str = include_str!("../../../docs/src/validation/integrator-study.md");
 const DETERMINISM: &str = include_str!("../../../docs/src/validation/determinism.md");
 const ATMOSPHERE: &str = include_str!("../../../docs/src/validation/atmosphere.md");
+const ANALYTIC: &str = include_str!("../../../docs/src/validation/analytic.md");
 
 fn mjk(args: &[&str]) -> io::Result<Output> {
     Command::new(env!("CARGO_BIN_EXE_mjk")).args(args).output()
@@ -18,6 +19,7 @@ fn each_study_is_byte_identical_and_matches_the_book() {
         ("integrators", INTEGRATORS),
         ("determinism", DETERMINISM),
         ("atmosphere", ATMOSPHERE),
+        ("analytic", ANALYTIC),
     ];
     for (study, published) in studies {
         let first = mjk(&["validate", study]).expect("the mjk binary runs");
@@ -34,7 +36,7 @@ fn validate_without_a_study_names_the_choices() {
     assert_eq!(output.status.code(), Some(2));
     let text = String::from_utf8_lossy(&output.stderr);
     assert!(
-        text.contains("name a study: integrators, determinism or atmosphere"),
+        text.contains("name a study: integrators, determinism, atmosphere or analytic"),
         "{text}"
     );
 }

@@ -15,12 +15,13 @@ use std::hint::black_box;
 use std::process::ExitCode;
 use std::time::Instant;
 
+use mjk_sim::validation::analytic::{self, analytic_study};
 use mjk_sim::validation::atmosphere::{self, atmosphere_study};
 use mjk_sim::validation::determinism::{self, determinism_study};
 use mjk_sim::validation::integrators::{self, Method, integrator_study};
 
 const USAGE: &str = "usage: mjk [--version | --help | validate (integrators [--timing] | \
-                     determinism | atmosphere) | random <seed> <name>... --bytes <n>]";
+                     determinism | atmosphere | analytic) | random <seed> <name>... --bytes <n>]";
 
 /// Step size and step count for `validate --timing`.
 const TIMING_RUN: (f64, u32) = (0.01, 10_000);
@@ -41,8 +42,11 @@ fn main() -> ExitCode {
         ["validate", "integrators", "--timing"] => timing(),
         ["validate", "determinism"] => validate_determinism(),
         ["validate", "atmosphere"] => validate_atmosphere(),
+        ["validate", "analytic"] => validate_analytic(),
         ["validate"] => {
-            eprintln!("error: name a study: integrators, determinism or atmosphere\n{USAGE}");
+            eprintln!(
+                "error: name a study: integrators, determinism, atmosphere or analytic\n{USAGE}"
+            );
             ExitCode::from(2)
         }
         ["random", rest @ ..] => random::run(rest),
@@ -88,6 +92,21 @@ fn validate_atmosphere() -> ExitCode {
     match atmosphere_study() {
         Ok(rows) => {
             print!("{}", atmosphere::markdown(&rows));
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// Prints the analytic validation table: the simulation loop against closed forms. The output
+/// is identical on every run and platform.
+fn validate_analytic() -> ExitCode {
+    match analytic_study() {
+        Ok(checks) => {
+            print!("{}", analytic::markdown(&checks));
             ExitCode::SUCCESS
         }
         Err(error) => {

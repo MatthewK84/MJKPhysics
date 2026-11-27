@@ -39,8 +39,9 @@ fixed-wing aircraft.
 > the engineering book, and the error and configuration model.
 > [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
 > frame-typed math, the SO(3) maps, the rigid-body equations of motion, the integrators
-> (including the Lie-group method), the fixed-step world loop, determinism and replay, and gravity
-> and the standard atmosphere are done, and the analytic validation suite is next.
+> (including the Lie-group method), the fixed-step world loop, determinism and replay, gravity
+> and the standard atmosphere, and the analytic validation suite are done, and the command-line
+> tool and log writer are next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.
