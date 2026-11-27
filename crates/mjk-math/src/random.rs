@@ -70,14 +70,31 @@ impl Xoshiro256StarStar {
         Self { s }
     }
 
-    /// The stream called `name` in a run seeded with `master_seed`: seeded from the master seed
-    /// and the FNV-1a hash of the name, so it is the same however many other streams exist and
-    /// in whatever order they were made, Eq. (DET-2).
+    /// The stream called `name` in a run seeded with `master_seed`, Eq. (DET-2). It is the same
+    /// however many other streams exist and in whatever order they were made.
+    ///
+    /// The first word of the state is the master seed mixed by one step of [`SplitMix64`]; the
+    /// other three are `SplitMix64` outputs seeded with the FNV-1a hash of the name XOR that
+    /// mixed seed. Both steps are bijections, so the state gives back the seed and then the name
+    /// hash: two streams start from the same state only if their seeds and their name hashes are
+    /// both equal. The second word, which alone decides the first draw, depends on both, so
+    /// streams in one run, and one stream across runs, start with different draws. The second and
+    /// third words come from two different `SplitMix64` states, so at most one is zero and the
+    /// state is never all zero.
     #[must_use]
     pub fn named(master_seed: u64, name: &str) -> Self {
         let mut hasher = StateHasher::new();
         hasher.write_bytes(name.as_bytes());
-        Self::from_seed(master_seed ^ hasher.finish())
+        let mixed_seed = SplitMix64::new(master_seed).next_u64();
+        let mut stream = SplitMix64::new(hasher.finish() ^ mixed_seed);
+        Self {
+            s: [
+                mixed_seed,
+                stream.next_u64(),
+                stream.next_u64(),
+                stream.next_u64(),
+            ],
+        }
     }
 
     /// The raw state.

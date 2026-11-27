@@ -48,19 +48,36 @@ x = \mathrm{rotl}(5\,s_1,\ 7)\cdot 9 \bmod 2^{64}
 ```
 
 and then advances the state with shifts, rotations and exclusive-ors. A stream is seeded from the
-master seed $`S`$ and its name $`n`$:
+master seed $`S`$ and its name $`n`$ through `SplitMix64`, as the generator's authors recommend
+(Steele, Lea and Flood, 2014). Its first output mixes the seed, and three outputs seeded with the
+name's hash chained to that mixed seed fill the rest:
 
 ```math
-(s_0, s_1, s_2, s_3) = \mathrm{SplitMix64}^{4}\big(S \oplus \mathrm{FNV}(n)\big)
+s_0 = \mathrm{SplitMix64}(S),\qquad
+(s_1, s_2, s_3) = \mathrm{SplitMix64}^{3}\big(\mathrm{FNV}(n) \oplus s_0\big)
 \qquad\text{(DET-2)}
 ```
 
-The state is four consecutive outputs of `SplitMix64`, as the generator's authors recommend for
-seeding (Steele, Lea and Flood, 2014). Those four outputs come from four different `SplitMix64`
-states through a bijection, so at most one is zero and the state is never all zero. A stream's
-sequence depends only on $`S`$ and $`n`$: it does not depend on how many other streams exist or on
-the order they were made. The generator's jump function was not used because that would tie each
-stream to its creation order.
+Each property follows from one step of the construction:
+
+- **No two pairs share a stream.** `SplitMix64`'s first output is a bijection of its seed, so
+  $`s_0`$ gives back $`S`$ and then $`s_1`$ gives back $`\mathrm{FNV}(n)`$. Two streams start from
+  the same state only if their seeds and their name hashes are both equal.
+- **Streams start differently.** The first draw depends on $`s_1`$ alone (DET-1), and $`s_1`$
+  depends on both the seed and the name through a nonlinear mix. Streams in one run, and one
+  stream in different runs, start with different draws.
+- **Never all zero.** $`s_1`$ and $`s_2`$ come from two different `SplitMix64` states, so at most
+  one of them is zero.
+- **Independent of other streams.** A stream depends only on $`S`$ and $`n`$, not on how many
+  other streams exist or the order they were made. The generator's jump function was not used
+  because it would tie each stream to its creation order.
+
+The first version of this page seeded a stream with $`\mathrm{SplitMix64}^{4}(S \oplus
+\mathrm{FNV}(n))`$. Squeezing the seed and the name into one 64-bit value made some pairs collide:
+seed 7's `gyro` stream was the same as the `pilot` stream of seed 7 ⊕ FNV(`gyro`) ⊕ FNV(`pilot`).
+A split layout, with the seed in the first two words and the name in the last two, ruled that
+out but gave every stream in a run the same first draw, because $`s_1`$ came from the seed
+alone. Tests now pin both properties.
 
 Uniform samples take the top 53 bits of a draw:
 
@@ -169,6 +186,9 @@ change moves ω by about $`2\times10^{-17}`$ rad/s. That is below the resolution
 |---|---|---|
 | `SplitMix64`, xoshiro256** and FNV-1a against the published reference algorithms | every value equal | `splitmix64_matches_the_reference`, `xoshiro256_star_star_matches_the_reference`, `the_hasher_is_fnv_1a_64` |
 | A new stream leaves another's sequence unchanged | 100 draws identical, interleaved or alone | `adding_a_stream_does_not_change_another` |
+| No two seed-and-name pairs share a stream; the state is built as in DET-2 | the pair that collided under XOR seeding now differs; state equal word for word | `no_two_seed_and_name_pairs_share_a_stream`, `a_stream_state_is_the_mixed_seed_then_the_name_chained_to_it` |
+| Streams start with different draws | distinct first draws for three streams in one run, and for one stream over three seeds | `streams_start_with_different_draws` |
+| The reference run's stream names | distinct FNV-1a hashes | `every_stream_name_hashes_differently` |
 | Uniform samples: endpoints and moments | exact at 0 and $`1-2^{-53}`$; mean and variance within 0.005 and 0.002 | `a_uniform_sample_is_the_top_53_bits_scaled_into_the_unit_interval`, `uniform_samples_have_the_right_mean_and_spread` |
 | Normal samples: values and moments | within $`10^{-14}`$ of a reference; variance within 0.03 of 1; 68.27 % within one σ | `gaussian_samples_match_the_box_muller_reference`, `gaussian_samples_have_unit_variance_and_normal_tails` |
 | Two runs of the reference scenario | identical at every checkpoint | `two_runs_agree_at_every_checkpoint` |

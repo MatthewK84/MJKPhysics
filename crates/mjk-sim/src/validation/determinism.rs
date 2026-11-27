@@ -19,6 +19,19 @@ use mjk_math::{Body, Mat3, Rotation, StateHash, StateHasher, Vec3, Xoshiro256Sta
 /// The master seed of the published run.
 pub const MASTER_SEED: u64 = 14;
 
+/// The gyro's random stream.
+pub const GYRO_STREAM: &str = "gyro";
+
+/// The accelerometer's random stream.
+pub const ACCELEROMETER_STREAM: &str = "accelerometer";
+
+/// The pilot's random stream.
+pub const PILOT_STREAM: &str = "pilot";
+
+/// Every random stream in the scenario. Their names must hash differently, or two would share a
+/// sequence.
+pub const STREAMS: [&str; 3] = [GYRO_STREAM, ACCELEROMETER_STREAM, PILOT_STREAM];
+
 /// The physics rate.
 pub const PHYSICS_HZ: u32 = 1000;
 
@@ -226,8 +239,8 @@ fn reference_world(seed: u64) -> Result<ReferenceWorld, ScenarioError> {
                 moment_b: Vec3::zero(),
             },
         },
-        gyro: NoisySensor::new(seed, "gyro", 500, 0.01)?,
-        accelerometer: NoisySensor::new(seed, "accelerometer", 250, 0.05)?,
+        gyro: NoisySensor::new(seed, GYRO_STREAM, 500, 0.01)?,
+        accelerometer: NoisySensor::new(seed, ACCELEROMETER_STREAM, 250, 0.05)?,
         controller: Rate::new(PHYSICS_HZ, 250)?,
         command: hover,
     };
@@ -296,7 +309,7 @@ where
 ///
 /// A [`ScenarioError`], which the published configuration never produces.
 pub fn record(seed: u64) -> Result<(Run, InputLog<PilotCommand>), ScenarioError> {
-    let mut pilot = Xoshiro256StarStar::named(seed, "pilot");
+    let mut pilot = Xoshiro256StarStar::named(seed, PILOT_STREAM);
     let mut inputs = InputLog::with_capacity(PILOT_COMMANDS);
     let run = fly(reference_world(seed)?, |world| {
         if world.clock().tick().is_multiple_of(PILOT_INTERVAL_TICKS) {

@@ -113,13 +113,71 @@ fn only_the_all_zero_state_is_rejected() {
 fn a_named_stream_is_seeded_from_the_master_seed_and_its_name() {
     let mut gyro = Xoshiro256StarStar::named(42, "gyro");
     assert_eq!(
-        draws(&mut gyro, 3),
+        gyro.state(),
         [
-            13_688_653_168_580_368_409,
-            6_949_996_018_319_318_681,
-            4_443_090_474_746_883_582,
+            0xBDD7_3226_2FEB_6E95,
+            0x8CEE_F3EC_DF02_E21D,
+            0xF6C4_97A2_D244_EE2C,
+            0xF99D_5D2A_FBDD_E68B,
         ]
     );
+    assert_eq!(
+        draws(&mut gyro, 3),
+        [
+            31_614_918_199_316_448,
+            14_130_086_764_394_278_411,
+            9_070_051_639_082_525_656,
+        ]
+    );
+}
+
+#[test]
+fn a_stream_state_is_the_mixed_seed_then_the_name_chained_to_it() {
+    let state = Xoshiro256StarStar::named(42, "gyro").state();
+    let mixed_seed = SplitMix64::new(42).next_u64();
+    let mut chained = SplitMix64::new(hash_bytes(b"gyro") ^ mixed_seed);
+    let expected = [
+        mixed_seed,
+        chained.next_u64(),
+        chained.next_u64(),
+        chained.next_u64(),
+    ];
+    assert_eq!(state, expected);
+}
+
+#[test]
+fn no_two_seed_and_name_pairs_share_a_stream() {
+    // XORing the seed with the name's hash, as this generator first did, made seed 7's gyro
+    // stream and this seed's pilot stream identical.
+    let partner = 7 ^ hash_bytes(b"gyro") ^ hash_bytes(b"pilot");
+    assert_eq!(partner, 8_938_727_255_507_050_944);
+    let xor_seeded =
+        |seed: u64, name: &[u8]| Xoshiro256StarStar::from_seed(seed ^ hash_bytes(name));
+    assert_eq!(xor_seeded(7, b"gyro"), xor_seeded(partner, b"pilot"));
+    assert_ne!(
+        Xoshiro256StarStar::named(7, "gyro").state(),
+        Xoshiro256StarStar::named(partner, "pilot").state()
+    );
+}
+
+#[test]
+fn streams_start_with_different_draws() {
+    // The first draw depends only on the second word of the state, so that word must depend on
+    // both the seed and the name.
+    let in_one_run: Vec<u64> = ["gyro", "accelerometer", "pilot"]
+        .iter()
+        .map(|name| Xoshiro256StarStar::named(42, name).next_u64())
+        .collect();
+    let across_runs: Vec<u64> = [1, 2, 3]
+        .iter()
+        .map(|seed| Xoshiro256StarStar::named(*seed, "gyro").next_u64())
+        .collect();
+    for firsts in [in_one_run, across_runs] {
+        let mut distinct = firsts.clone();
+        distinct.sort_unstable();
+        distinct.dedup();
+        assert_eq!(distinct.len(), firsts.len(), "{firsts:?}");
+    }
 }
 
 #[test]
@@ -173,9 +231,9 @@ fn uniform_samples_have_the_right_mean_and_spread() {
 fn gaussian_samples_match_the_box_muller_reference() {
     let mut rng = Xoshiro256StarStar::named(7, "turbulence");
     let expected = [
-        -1.015_813_484_161_296_7,
-        1.433_059_580_341_392_6,
-        1.777_002_738_798_530_8,
+        -0.919_986_653_515_486_3,
+        2.909_483_802_984_310_4,
+        -0.087_976_056_573_552_15,
     ];
     for value in expected {
         let sample = rng.next_gaussian();
