@@ -6,6 +6,7 @@ use std::process::{Command, Output};
 
 const INTEGRATORS: &str = include_str!("../../../docs/src/validation/integrator-study.md");
 const DETERMINISM: &str = include_str!("../../../docs/src/validation/determinism.md");
+const ATMOSPHERE: &str = include_str!("../../../docs/src/validation/atmosphere.md");
 
 fn mjk(args: &[&str]) -> io::Result<Output> {
     Command::new(env!("CARGO_BIN_EXE_mjk")).args(args).output()
@@ -13,7 +14,12 @@ fn mjk(args: &[&str]) -> io::Result<Output> {
 
 #[test]
 fn each_study_is_byte_identical_and_matches_the_book() {
-    for (study, published) in [("integrators", INTEGRATORS), ("determinism", DETERMINISM)] {
+    let studies = [
+        ("integrators", INTEGRATORS),
+        ("determinism", DETERMINISM),
+        ("atmosphere", ATMOSPHERE),
+    ];
+    for (study, published) in studies {
         let first = mjk(&["validate", study]).expect("the mjk binary runs");
         let second = mjk(&["validate", study]).expect("the mjk binary runs");
         assert!(first.status.success(), "{study}");
@@ -28,7 +34,7 @@ fn validate_without_a_study_names_the_choices() {
     assert_eq!(output.status.code(), Some(2));
     let text = String::from_utf8_lossy(&output.stderr);
     assert!(
-        text.contains("name a study: integrators or determinism"),
+        text.contains("name a study: integrators, determinism or atmosphere"),
         "{text}"
     );
 }

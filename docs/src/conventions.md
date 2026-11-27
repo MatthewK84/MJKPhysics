@@ -65,8 +65,10 @@ gravity when the WGS-84 gravity model is selected
 the edges: GNSS output ([#73](https://github.com/MatthewK84/MJKPhysics/issues/73)) and terrain
 placement ([#62](https://github.com/MatthewK84/MJKPhysics/issues/62)).
 
-Altitude above the reference ellipsoid is $`h = h_0 - p_D`$, where $`p_D`$ is the Down component of
-the position.
+Altitude is $`h = h_0 - p_D`$, where $`h_0`$ is the field elevation above mean sea level and $`p_D`$
+is the Down component of the position. The atmosphere reads it as height above mean sea level;
+WGS-84 gravity uses the same value as height above the ellipsoid, neglecting the geoid height,
+at most about 100 m ([Atmosphere and gravity](models/atmosphere.md)).
 
 ### 2.2 Body frame
 
@@ -290,7 +292,7 @@ Gravity acts along $`+\mathbf{z}_W`$ with magnitude $`g_0 = 9.80665`$ m/s² (sta
 WGS-84 normal gravity as a function of latitude and altitude when that model is selected.
 Atmospheric quantities follow the U.S. Standard Atmosphere 1976: temperature $`T`$ in kelvin,
 pressure $`P`$ in pascals, density $`\rho`$ in kg/m³, speed of sound $`a`$, dynamic viscosity $`\mu`$
-([#15](https://github.com/MatthewK84/MJKPhysics/issues/15)).
+([Atmosphere and gravity](models/atmosphere.md)).
 
 ## 6. Rotors and propellers
 

@@ -51,7 +51,7 @@ const PILOT_INTERVAL_TICKS: u64 = 500;
 const PILOT_COMMANDS: usize = 20;
 
 /// Standard gravity.
-const GRAVITY_M_S2: f64 = 9.806_65;
+const GRAVITY_M_S2: f64 = mjk_env::G0_M_S2;
 
 /// Vehicle mass.
 const MASS_KG: f64 = 2.0;
