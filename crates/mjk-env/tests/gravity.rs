@@ -59,6 +59,58 @@ fn the_derived_constants_follow_from_the_defining_parameters() {
     assert!((k - wgs84::SOMIGLIANA_K).abs() < 1e-13);
 }
 
+/// WGS-84 constants as printed in `NGA.STND.0036_1.0.0_WGS84`, version 1.0.0, 2014-07-08:
+/// Table 3.5 (p. 3-9) and Table 3.6 (p. 3-10). Each entry is (name, value as printed, one unit of
+/// its last printed digit).
+const PUBLISHED: [(&str, f64, f64); 7] = [
+    ("f", 3.352_810_664_747_5e-3, 1e-16),
+    ("b", 6_356_752.314_2, 1e-4),
+    ("e²", 6.694_379_990_141e-3, 1e-15),
+    ("γe", 9.780_325_335_9, 1e-10),
+    ("γp", 9.832_184_937_9, 1e-10),
+    ("k", 1.931_852_652_458e-3, 1e-15),
+    ("m", 3.449_786_506_841e-3, 1e-15),
+];
+
+/// The code's value of each published constant.
+fn ours(name: &str) -> f64 {
+    let a = wgs84::SEMI_MAJOR_AXIS_M;
+    match name {
+        "f" => wgs84::FLATTENING,
+        "b" => a * (1.0 - wgs84::FLATTENING),
+        "e²" => wgs84::ECCENTRICITY_SQUARED,
+        "γe" => wgs84::EQUATORIAL_GRAVITY_M_S2,
+        "γp" => wgs84::POLAR_GRAVITY_M_S2,
+        "k" => wgs84::SOMIGLIANA_K,
+        "m" => wgs84::GRAVITY_RATIO_M,
+        _ => f64::NAN,
+    }
+}
+
+#[test]
+fn the_derived_constants_agree_with_the_standard_to_the_last_printed_digit() {
+    for (name, printed, unit) in PUBLISHED {
+        let gap = (ours(name) - printed).abs();
+        assert!(
+            gap <= 0.5 * unit,
+            "{name}: code {}, printed {printed}",
+            ours(name)
+        );
+    }
+}
+
+#[test]
+fn a_double_precision_derivation_would_miss_the_published_k() {
+    // Computing q₀ directly in double precision loses about 3e-13 of it to cancellation, which
+    // moves k by 44 units of the standard's last printed digit. The stored 40-digit value
+    // matches the standard; a recomputation in double precision must not replace it.
+    let printed = 1.931_852_652_458e-3;
+    let unit = 1e-15;
+    let (_, _, _, _, k_double) = derived_constants();
+    assert!((k_double - printed).abs() > 40.0 * unit, "{k_double}");
+    assert!((wgs84::SOMIGLIANA_K - printed).abs() <= 0.5 * unit);
+}
+
 #[test]
 fn somigliana_gives_the_equator_and_pole_values() {
     assert!(
