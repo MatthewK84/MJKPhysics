@@ -43,7 +43,7 @@ cargo deny --locked check
 ```
 
 ```bash
-cargo llvm-cov --workspace --exclude xtask --exclude mjk-cli --exclude mjk-wasm --fail-under-lines 90
+cargo llvm-cov --workspace --exclude xtask --exclude mjk-cli --exclude mjk-wasm --exclude mjk-alloc-counter --fail-under-lines 90
 ```
 
 ```bash
@@ -112,13 +112,13 @@ numbers are the Power of Ten's, as `cargo xtask standards` reports them.
 |---|---|---|
 | 1 | **Simple control flow; no recursion.** Early returns, `let … else`, iterator adaptors. | clippy `excessive_nesting` (threshold 4: an `impl` block counts as a level, so methods get two levels and free functions three) and `pedantic`. Recursion: `cargo xtask standards` builds every workspace target's LLVM IR and reports any call-graph cycle through our code, direct or mutual, including calls resolved through generics, traits and closures. |
 | 2 | **Every loop has a fixed upper bound.** | `for` loops run over finite ranges and collections. Every `loop` and `while` in the workspace carries a `// bound:` comment naming its bound (`cargo xtask standards`); clippy `infinite_loop` is denied. |
-| 3 | **No heap allocation after initialization.** | Review, until the allocation-counting test on `World::step` lands with [#13](https://github.com/MatthewK84/MJKPhysics/issues/13). |
+| 3 | **No heap allocation after initialization.** | `crates/mjk-dynamics/tests/allocations.rs`: a counting global allocator proves `World::step` and `World::advance` allocate nothing over 10⁵ steps. New models and subsystems join that test as they land. |
 | 4 | **Short functions.** At most 50 lines. | clippy `too_many_lines` (threshold in `clippy.toml`) |
 | 5 | **Assertions state preconditions.** Engine functions that take physical quantities check them with `debug_assert!`. | Review: a per-function quota produces assertions that check nothing. `cargo xtask standards` reports density per crate so a drop is visible. |
 | 6 | **Smallest possible scope.** Declare at first use, immutable by default, smallest visibility. | compiler; clippy `shadow_unrelated` |
 | 7 | **Check every return value; validate parameters.** No `unwrap`, `expect`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`, panicking indexing, silent `as` casts or exact float comparison. | `unused_must_use` under `-D warnings`; clippy `must_use_candidate`, `let_underscore_must_use`, `let_underscore_untyped`, `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, `unreachable`, `indexing_slicing`, `as_conversions`, `float_cmp` |
 | 8 | **Limited preprocessor.** No `macro_rules!` and no conditional compilation other than `#[cfg(test)]` outside tests. The only procedural macro in engine crates is serde's derive, for configuration types (ADR 0006). | `cargo xtask standards`; the engine dependency allowlist in `xtask/src/layering.rs` |
-| 9 | **Restricted pointers.** No `unsafe`, no `dyn` trait objects and no function pointer types outside tests; use generics. | `unsafe_code = "forbid"`; `cargo xtask standards` |
+| 9 | **Restricted pointers.** No `unsafe`, no `dyn` trait objects and no function pointer types outside tests; use generics. | `unsafe_code = "forbid"` in every crate but one (below); `cargo xtask standards` |
 | 10 | **All warnings on, static analysis daily.** | `-D warnings`, clippy `pedantic`, `rustfmt`, `cargo-deny`, coverage of at least 90 %, mutation testing on every change and weekly on everything; CI daily |
 
 Project rules on top of the ten:
@@ -138,6 +138,13 @@ The source checks (rules 2, 5, 8 and 9) cover every workspace crate, test code e
 
 **Exemption: `xtask`.** Repository tooling is held to every rule except recursion: it walks
 syntax trees with `syn`'s visitor, which recurses with the depth of the source's own nesting.
+
+**Exemption: `mjk-alloc-counter`.** The allocation test needs a counting global allocator, and
+implementing `GlobalAlloc` is unsafe by definition. That one `unsafe impl` lives in its own
+test-support crate, which sets `unsafe_code = "deny"` instead of `"forbid"`, allows it on the
+impl alone, and requires a `SAFETY:` comment on every unsafe block. The layering check lets any
+crate use it as a development dependency and no crate use it for anything else, so it never
+reaches a build that ships.
 
 ### Mutation testing
 

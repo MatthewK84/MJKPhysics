@@ -16,6 +16,7 @@ publish = false
 mjk-core = { path = "crates/mjk-core" }
 mjk-math = { path = "crates/mjk-math" }
 mjk-dynamics = { path = "crates/mjk-dynamics" }
+mjk-alloc-counter = { path = "crates/mjk-alloc-counter" }
 mjk-env = { path = "crates/mjk-env" }
 mjk-aero = { path = "crates/mjk-aero" }
 mjk-contact = { path = "crates/mjk-contact" }

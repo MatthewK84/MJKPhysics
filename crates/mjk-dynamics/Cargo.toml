@@ -14,6 +14,13 @@ mjk-math.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
+mjk-alloc-counter.workspace = true
+
+# Measures allocations with a counting global allocator; without the test harness, no other
+# thread allocates while it measures.
+[[test]]
+name = "allocations"
+harness = false
 
 [lints]
 workspace = true

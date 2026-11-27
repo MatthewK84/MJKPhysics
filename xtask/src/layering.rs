@@ -98,6 +98,10 @@ pub const ENGINE: &[&str] = &[
 /// See ADR 0001 and ADR 0006.
 pub const ENGINE_EXTERNAL_ALLOWED: &[&str] = &["libm", "serde", "serde_path_to_error", "toml"];
 
+/// Test-support crates: any crate may use them as development dependencies, and no crate may
+/// use them for anything else. `mjk-alloc-counter` holds the repository's only unsafe code.
+pub const TEST_SUPPORT: &[&str] = &["mjk-alloc-counter"];
+
 /// Every workspace crate and the workspace crates it may depend on.
 pub const RULES: &[(&str, &[&str])] = &[
     ("mjk-core", &[]),
@@ -135,6 +139,7 @@ pub const RULES: &[(&str, &[&str])] = &[
     ),
     ("mjk-cli", ENGINE),
     ("mjk-wasm", ENGINE),
+    ("mjk-alloc-counter", &[]),
     ("xtask", &[]),
 ];
 
@@ -166,7 +171,8 @@ fn check_package(package: &Package) -> Vec<Violation> {
 
 fn check_dependency(from: &str, allowed: &[&str], dep: &Dependency) -> Option<Violation> {
     if dep.internal {
-        let permitted = allowed.contains(&dep.name.as_str());
+        let test_support = TEST_SUPPORT.contains(&dep.name.as_str()) && dep.kind == DepKind::Dev;
+        let permitted = test_support || allowed.contains(&dep.name.as_str());
         return (!permitted).then(|| Violation::ForbiddenInternal {
             from: from.to_owned(),
             to: dep.name.clone(),
@@ -197,6 +203,26 @@ mod tests {
             name: name.to_owned(),
             dependencies,
         }
+    }
+
+    #[test]
+    fn test_support_crates_are_development_dependencies_only() {
+        let as_dev = package(
+            "mjk-dynamics",
+            vec![dep("mjk-alloc-counter", DepKind::Dev, true)],
+        );
+        assert!(check(&[as_dev]).is_empty());
+        let as_normal = package(
+            "mjk-dynamics",
+            vec![dep("mjk-alloc-counter", DepKind::Normal, true)],
+        );
+        assert_eq!(
+            check(&[as_normal]),
+            vec![Violation::ForbiddenInternal {
+                from: "mjk-dynamics".to_owned(),
+                to: "mjk-alloc-counter".to_owned(),
+            }]
+        );
     }
 
     #[test]

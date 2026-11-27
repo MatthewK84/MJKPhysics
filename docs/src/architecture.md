@@ -41,7 +41,7 @@ CI enforces them, are on the [Engineering standards](engineering-standards.md) p
   rate divisors. The same inputs and seed produce bit-identical state on every platform
   ([ADR 0002](adr/0002-integrator-design.md)).
 - **No heap allocation per step.** Everything `World::step` needs is allocated when the world is
-  built.
+  built; a counting allocator proves it in CI ([Engineering standards](engineering-standards.md)).
 - **No panics.** Fallible operations return `Result<_, EngineError>` from `mjk-core`.
   Configuration errors name the exact field; numerical failures report the simulation time and
   the offending quantity ([ADR 0006](adr/0006-errors-and-configuration.md)).
@@ -51,13 +51,34 @@ CI enforces them, are on the [Engineering standards](engineering-standards.md) p
 
 ## One simulation step
 
-The world loop ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)) will advance the state
-in this order, each stage reading only results from earlier stages:
+`World::step` (`mjk_dynamics::World`) advances the state in this order, each stage reading only
+results from earlier stages:
 
-1. Environment: atmosphere and wind at each evaluation point.
-2. Sensors and controllers that are due on this tick, using sample-and-hold between their updates.
-3. Actuators: motors, ESCs and control surfaces respond to commands.
-4. Forces and moments: rotors, aerodynamics and gravity, summed about the center of mass.
-5. Integration of the rigid-body state ([ADR 0002](adr/0002-integrator-design.md)).
-6. Contact: collision detection and impulse resolution ([ADR 0003](adr/0003-contact-solver.md)).
-7. Logging and snapshot, written into preallocated buffers.
+1. **Discrete subsystems** due on this tick, through `Model::update`: sensors first, then
+   controllers, reading the state at the start of the step. The inputs they set are held constant
+   for the whole step (zero-order hold).
+2. **Continuous dynamics**, through one integrator step
+   ([ADR 0002](adr/0002-integrator-design.md)). Inside every integrator stage the system
+   evaluates, in order: the environment (atmosphere and wind at each point), actuators (motors,
+   ESCs and control surfaces responding to the held commands), and forces and moments (rotors,
+   aerodynamics and gravity, summed about the center of mass).
+3. **After the step**, through `Model::after_step`, with the clock already at the new tick:
+   contact detection and impulse resolution ([ADR 0003](adr/0003-contact-solver.md)), then logging
+   into preallocated buffers. Both attach here when they land; until then the hook does nothing.
+
+### Time and rates
+
+Time is an integer tick count at a fixed physics rate, 1 kHz by default; seconds are the tick
+divided by the rate, a single correctly rounded division, never a running sum. A subsystem's rate
+must divide the physics rate exactly: it runs on tick zero and then every `physics/rate` ticks, so
+a 500 Hz controller and a 50 Hz barometer run on every second and every twentieth tick. A rate
+that does not divide the physics rate is rejected, never rounded.
+
+### Real time
+
+A real-time front end calls `World::advance(real_dt)`, which takes as many whole steps as fit,
+carries the remainder to the next call, and returns `alpha`, how far real time has moved past the
+last step as a fraction of one. The viewer draws the state interpolated between the previous and
+current steps by `alpha`. If more steps are due than a cap allows (a quarter of a second of steps
+by default), the whole backlog is dropped and reported, so a slow frame cannot make the next one
+slower (the "spiral of death").

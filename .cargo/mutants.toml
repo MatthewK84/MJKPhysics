@@ -2,9 +2,14 @@
 # and fails on any mutant that survives; a weekly job mutates the whole engine
 # (CONTRIBUTING.md, "Mutation testing").
 
-# Engine crates only: xtask is repository tooling, and the CLI and WebAssembly crates are thin
-# front ends covered by their own smoke tests.
-exclude_globs = ["xtask/**", "crates/mjk-cli/**", "crates/mjk-wasm/**"]
+# Engine crates only: xtask is repository tooling, the CLI and WebAssembly crates are thin front
+# ends covered by their own smoke tests, and the allocation counter is test support.
+exclude_globs = [
+    "xtask/**",
+    "crates/mjk-cli/**",
+    "crates/mjk-wasm/**",
+    "crates/mjk-alloc-counter/**",
+]
 
 # Equivalent mutants: changes no test can observe, because both versions compute the same
 # result for every input. Each entry names the file and function, never a line number, and says

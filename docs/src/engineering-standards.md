@@ -23,13 +23,13 @@ failure modes can be checked by a tool rather than trusted.
 |---|---|---|
 | 1 | Simple control flow, no recursion | Clippy `excessive_nesting`; call-graph cycle check |
 | 2 | Every loop has a fixed upper bound | `// bound:` comment on every `loop` and `while`; Clippy `infinite_loop` |
-| 3 | No heap allocation after initialization | Allocation-counting test on `World::step` ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)); review until then |
+| 3 | No heap allocation after initialization | A counting global allocator proves a world step allocates nothing over 10⁵ steps |
 | 4 | Functions of at most 50 lines | Clippy `too_many_lines` |
 | 5 | Assertions state preconditions | Review, with assertion density reported per crate |
 | 6 | Smallest possible scope | Compiler; Clippy `shadow_unrelated` |
 | 7 | Check every return value | `unused_must_use`, `let_underscore_must_use`, `let_underscore_untyped`; no `unwrap`, `expect` or `panic!` |
 | 8 | Limited preprocessor | No `macro_rules!`, no conditional compilation outside tests; serde's derive is the only procedural macro in the engine |
-| 9 | Restricted pointers | `unsafe` forbidden; no `dyn` trait objects or function pointer types |
+| 9 | Restricted pointers | `unsafe` forbidden, except one audited test allocator; no `dyn` trait objects or function pointer types |
 | 10 | All warnings on, analyzed daily | `-D warnings`, Clippy `pedantic`, the gates below, daily CI |
 
 Rules 2, 8 and 9 and the assertion report come from `cargo xtask standards`, which parses every
@@ -55,6 +55,19 @@ other source rules, on a deliberately bad sample, before it was enabled.
 
 The one exemption is `xtask`, the repository's tooling. It walks syntax trees with `syn`'s
 visitor, which recurses with the depth of the source's own nesting.
+
+### Proving a step allocates nothing
+
+Rule 3 is checked by running the world under a counting global allocator: a test binary built
+without the test harness, so no other thread allocates while it measures, takes $`10^5`$ steps
+with RK4 and with RKMK4 and fails if the allocation count moves. Planting a single `Vec` in a
+500 Hz controller makes it report 55 050 allocations, one per controller run.
+
+Implementing `GlobalAlloc` is unsafe by definition, so that allocator is the repository's only
+`unsafe` code. It lives in a test-support crate, `mjk-alloc-counter`: every method forwards to the
+system allocator unchanged, each unsafe block carries a `SAFETY:` comment that Clippy requires,
+and the layering check lets crates use it only as a development dependency. Every other crate
+forbids `unsafe` outright.
 
 ### Nesting
 
@@ -175,7 +188,6 @@ will follow the same principles with `ruff` and `mypy --strict`, in CI from its 
 
 | Item | Why a tool doesn't check it |
 |---|---|
-| Heap allocation in `World::step` | The allocation-counting test needs the world loop ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)) |
 | Whether an assertion states a real precondition | Only a reader can judge what a precondition should be |
 | Units in names of physical quantities (`mass_kg`, `omega_rad_s`) | Names carry meaning a linter cannot infer |
 | Recursion in TypeScript | ESLint has no call-graph rule |

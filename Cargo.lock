@@ -197,6 +197,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mjk-alloc-counter"
+version = "0.0.0"
+
+[[package]]
 name = "mjk-cli"
 version = "0.0.0"
 dependencies = [
@@ -227,6 +231,7 @@ version = "0.0.0"
 name = "mjk-dynamics"
 version = "0.0.0"
 dependencies = [
+ "mjk-alloc-counter",
  "mjk-math",
  "proptest",
 ]

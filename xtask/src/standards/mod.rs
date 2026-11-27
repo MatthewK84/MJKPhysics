@@ -21,6 +21,7 @@ use crate::metadata::{self, Target};
 const OTHER_SOURCES: &[(&str, &str)] = &[
     ("mjk-cli", "crates/mjk-cli/src"),
     ("mjk-wasm", "crates/mjk-wasm/src"),
+    ("mjk-alloc-counter", "crates/mjk-alloc-counter/src"),
     ("xtask", "xtask/src"),
 ];
 

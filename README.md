@@ -38,8 +38,9 @@ fixed-wing aircraft.
 > [engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html),
 > the engineering book, and the error and configuration model.
 > [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
-> frame-typed math, the SO(3) maps, the rigid-body equations of motion and the integrators,
-> including the Lie-group method, are done, and the fixed-step world loop is next.
+> frame-typed math, the SO(3) maps, the rigid-body equations of motion, the integrators
+> (including the Lie-group method) and the fixed-step world loop are done, and determinism and
+> replay are next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.
@@ -288,6 +289,7 @@ crates/
   mjk-sim        world composition, airframes, scenarios
   mjk-cli        the `mjk` command-line tool
   mjk-wasm       WebAssembly bindings for the browser viewer
+  mjk-alloc-counter  counting allocator for the zero-allocation test (test support only)
 xtask/           repository automation (`cargo xtask layering | equations | standards`)
 docs/            the engineering book (mdBook)
 viewer/          browser viewer (TypeScript), and the lint policy shared by all scripts
