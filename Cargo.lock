@@ -204,6 +204,7 @@ version = "0.0.0"
 name = "mjk-cli"
 version = "0.0.0"
 dependencies = [
+ "mjk-math",
  "mjk-sim",
 ]
 

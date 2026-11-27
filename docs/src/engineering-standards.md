@@ -15,7 +15,7 @@ failure modes can be checked by a tool rather than trusted.
 |---|---|
 | Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the native-against-WebAssembly comparison, the viewer and script checks, the book build |
 | Daily | The same suite, so a newly published advisory against a locked dependency fails within a day |
-| Weekly | Tests on macOS and Windows; mutation testing of the whole engine; Dependabot updates |
+| Weekly | Tests on macOS and Windows; mutation testing of the whole engine; PractRand on interleaved random streams; Dependabot updates |
 
 ## Rust: the Power of Ten
 
@@ -173,7 +173,8 @@ to review (below).
 - **Updates.** Dependabot proposes a release only once it is 14 days old, so a compromised or
   broken release has time to be noticed. Security updates are not delayed.
 - **CI.** Third-party actions are pinned to full commit SHAs, and checkouts don't keep
-  credentials.
+  credentials. PractRand, the one tool built from source in CI, is checked against the SHA-256
+  of its archive before it is built.
 
 ## TypeScript and JavaScript
 

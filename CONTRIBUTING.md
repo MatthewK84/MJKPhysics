@@ -92,7 +92,9 @@ Source: *GitHub Actions*, and until then the publish job skips with a warning.
 Scheduled workflows, which only run from the default branch:
 
 - `cross-platform.yml` runs the test suite on macOS and Windows every Monday.
-- `deep-analysis.yml` mutates the whole engine every Sunday, in four shards.
+- `deep-analysis.yml` mutates the whole engine every Sunday, in four shards, and runs PractRand
+  on eight interleaved random streams of one run to 32 GB. PractRand is built from source in the
+  job, from an archive pinned by its SHA-256.
 - Dependabot (`.github/dependabot.yml`) opens grouped updates for actions, cargo and npm weekly.
 
 **Branch protection.** To make CI block merges, a repository admin enables a rule for `main`

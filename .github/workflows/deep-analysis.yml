@@ -1,6 +1,7 @@
-# Weekly whole-engine mutation testing. Pull requests and pushes mutate only the lines they
-# change (ci.yml, "Mutation testing (changed lines)"); this run catches gaps in code that has not
-# changed since the gate was introduced, and survivors created by test changes alone.
+# Weekly checks too slow for every change. Mutation testing of the whole engine: pull requests and
+# pushes mutate only the lines they change (ci.yml, "Mutation testing (changed lines)"), so this
+# run catches gaps in code that has not changed since the gate was introduced, and survivors
+# created by test changes alone. And a statistical test of the random streams (#14).
 # Scheduled workflows only run from the default branch.
 name: Deep analysis
 
@@ -47,5 +48,53 @@ jobs:
             echo
             echo '```'
             cat "$RUNNER_TEMP/mutants.out/missed.txt" "$RUNNER_TEMP/mutants.out/timeout.txt" 2>/dev/null
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  random-streams:
+    name: Random streams (PractRand)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo build -p mjk-cli --release --locked
+      - name: Build PractRand 0.96 from its checksum-pinned source
+        env:
+          SHA256: e4caf7fda98b2c597bbda3b576753cf5a0f6047aab837c82be370ab798a672e1
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 -o PractRand_0.96.zip \
+            https://downloads.sourceforge.net/project/pracrand/PractRand_0.96.zip
+          echo "${SHA256}  PractRand_0.96.zip" | sha256sum --check --strict
+          unzip -q PractRand_0.96.zip
+          cd PractRand
+          # The Linux build in PractRand's installation notes (doc/installation.txt), less a
+          # warning flag that only Clang knows.
+          g++ -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -Iinclude
+          ar rcs PractRand.a ./*.o
+          g++ -o RNG_test tools/RNG_test.cpp PractRand.a -O3 -Iinclude -Itools -pthread
+      - name: Eight streams of one run, interleaved, to 32 GB; any FAIL fails
+        run: |
+          target/release/mjk random 14 gyro accelerometer pilot magnetometer barometer gnss \
+            turbulence gust --bytes 40000000000 \
+            | "$RUNNER_TEMP/PractRand/RNG_test" stdin64 -tlmax 32GB -multithreaded \
+            | tee "$RUNNER_TEMP/practrand.txt"
+          if grep -q "FAIL" "$RUNNER_TEMP/practrand.txt"; then
+            echo "PractRand found the interleaved streams distinguishable from random."
+            exit 1
+          fi
+      - name: Report PractRand's results in the job summary
+        if: always()
+        run: |
+          {
+            echo "### PractRand: eight interleaved streams of one run"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/practrand.txt" 2>/dev/null
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

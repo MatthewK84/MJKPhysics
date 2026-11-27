@@ -49,20 +49,24 @@ x = \mathrm{rotl}(5\,s_1,\ 7)\cdot 9 \bmod 2^{64}
 
 and then advances the state with shifts, rotations and exclusive-ors. A stream is seeded from the
 master seed $`S`$ and its name $`n`$ through `SplitMix64`, as the generator's authors recommend
-(Steele, Lea and Flood, 2014). Its first output mixes the seed, and three outputs seeded with the
-name's hash chained to that mixed seed fill the rest:
+(Steele, Lea and Flood, 2014). One output mixes the seed into $`m`$; a second `SplitMix64`,
+seeded with the name's hash chained to $`m`$, gives four outputs $`c_1 \ldots c_4`$:
 
 ```math
-s_0 = \mathrm{SplitMix64}(S),\qquad
-(s_1, s_2, s_3) = \mathrm{SplitMix64}^{3}\big(\mathrm{FNV}(n) \oplus s_0\big)
+m = \mathrm{SplitMix64}(S),\qquad
+(c_1, c_2, c_3, c_4) = \mathrm{SplitMix64}^{4}\big(\mathrm{FNV}(n) \oplus m\big),\qquad
+(s_0, s_1, s_2, s_3) = (m \oplus c_4,\ c_1,\ c_2,\ c_3)
 \qquad\text{(DET-2)}
 ```
 
 Each property follows from one step of the construction:
 
 - **No two pairs share a stream.** `SplitMix64`'s first output is a bijection of its seed, so
-  $`s_0`$ gives back $`S`$ and then $`s_1`$ gives back $`\mathrm{FNV}(n)`$. Two streams start from
-  the same state only if their seeds and their name hashes are both equal.
+  $`s_1`$ gives back $`\mathrm{FNV}(n) \oplus m`$, which determines $`c_4`$; then $`s_0`$ gives
+  back $`m`$, so $`S`$, and with it $`\mathrm{FNV}(n)`$. Two streams start from the same state only
+  if their seeds and their name hashes are both equal.
+- **No word is shared.** Every word depends on both the seed and the name, so the streams of
+  one run have nothing in common to correlate through.
 - **Streams start differently.** The first draw depends on $`s_1`$ alone (DET-1), and $`s_1`$
   depends on both the seed and the name through a nonlinear mix. Streams in one run, and one
   stream in different runs, start with different draws.
@@ -74,10 +78,26 @@ Each property follows from one step of the construction:
 
 The first version of this page seeded a stream with $`\mathrm{SplitMix64}^{4}(S \oplus
 \mathrm{FNV}(n))`$. Squeezing the seed and the name into one 64-bit value made some pairs collide:
-seed 7's `gyro` stream was the same as the `pilot` stream of seed 7 ⊕ FNV(`gyro`) ⊕ FNV(`pilot`).
+seed 7's `gyro` stream was the same as the `pilot` stream of seed
+$`7 \oplus \mathrm{FNV}(\texttt{gyro}) \oplus \mathrm{FNV}(\texttt{pilot})`$.
 A split layout, with the seed in the first two words and the name in the last two, ruled that
 out but gave every stream in a run the same first draw, because $`s_1`$ came from the seed
-alone. Tests now pin both properties.
+alone. A third version set $`s_0 = m`$, which every stream of a run then shared; no test found a
+correlation through it, but $`s_0 = m \oplus c_4`$ removes the shared word rather than relying on
+that. Tests now pin each of these properties.
+
+Independence between streams is measured as well as argued. For every pair of the reference
+run's streams, and for one stream at adjacent seeds, as a Monte Carlo sweep would use them, the
+tests compare $`10^5`$ samples:
+
+- **Correlation:** at lags from −4 to +4, the worst is 0.0074, or 2.3 standard deviations
+  ($`\sigma = 1/\sqrt{10^5}`$). The tests fail above 6σ.
+- **Bit balance:** for each of the 64 bits of the two streams' XOR, the worst imbalance between
+  zeros and ones is 3.0σ.
+
+Those are the largest values expected by chance from that many comparisons. Each week, PractRand
+(Doty-Humphrey) tests eight streams of one run, interleaved, to 32 GB, far past what $`10^5`$
+samples can see. `mjk random <seed> <name>... --bytes <n>` writes the interleaved streams.
 
 Uniform samples take the top 53 bits of a draw:
 
@@ -186,7 +206,10 @@ change moves ω by about $`2\times10^{-17}`$ rad/s. That is below the resolution
 |---|---|---|
 | `SplitMix64`, xoshiro256** and FNV-1a against the published reference algorithms | every value equal | `splitmix64_matches_the_reference`, `xoshiro256_star_star_matches_the_reference`, `the_hasher_is_fnv_1a_64` |
 | A new stream leaves another's sequence unchanged | 100 draws identical, interleaved or alone | `adding_a_stream_does_not_change_another` |
-| No two seed-and-name pairs share a stream; the state is built as in DET-2 | the pair that collided under XOR seeding now differs; state equal word for word | `no_two_seed_and_name_pairs_share_a_stream`, `a_stream_state_is_the_mixed_seed_then_the_name_chained_to_it` |
+| No two seed-and-name pairs share a stream; the state is built as in DET-2 | the pair that collided under XOR seeding now differs; state equal word for word | `no_two_seed_and_name_pairs_share_a_stream`, `a_stream_state_is_the_name_chained_to_the_mixed_seed` |
+| No state word is shared by the streams of a run | all four words differ, pair by pair | `no_word_is_shared_by_the_streams_of_a_run` |
+| Streams of one run, and one stream at adjacent seeds, are uncorrelated | correlation at lags −4 to +4 below 0.019 (6σ); every bit of their XOR balanced within 6σ, over $`10^5`$ samples | `streams_in_a_run_are_uncorrelated`, `adjacent_seeds_are_uncorrelated`; `the_independence_checks_detect_a_dependent_stream` shows both checks fail on a dependent pair |
+| Eight interleaved streams of one run | no PractRand failure to 32 GB | weekly `deep-analysis.yml`, job *Random streams (PractRand)* |
 | Streams start with different draws | distinct first draws for three streams in one run, and for one stream over three seeds | `streams_start_with_different_draws` |
 | The reference run's stream names | distinct FNV-1a hashes | `every_stream_name_hashes_differently` |
 | Uniform samples: endpoints and moments | exact at 0 and $`1-2^{-53}`$; mean and variance within 0.005 and 0.002 | `a_uniform_sample_is_the_top_53_bits_scaled_into_the_unit_interval`, `uniform_samples_have_the_right_mean_and_spread` |
@@ -223,3 +246,5 @@ change moves ω by about $`2\times10^{-17}`$ rad/s. That is below the resolution
   algorithm," IETF Internet-Draft `draft-eastlake-fnv`.
 - IEEE 754-2019, *Standard for Floating-Point Arithmetic*: correct rounding of the basic
   operations, square root and fused multiply-add.
+- C. Doty-Humphrey, *PractRand*, version 0.96, a test suite for random number generators
+  (pracrand.sourceforge.net).

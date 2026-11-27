@@ -2,10 +2,13 @@
 //!
 //! A front end, not part of the engine. `mjk validate <study>` prints a validation table that the
 //! book includes: `integrators` ([#12](https://github.com/MatthewK84/MJKPhysics/issues/12)) or
-//! `determinism` ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)). `run` and `replay`, and
-//! the rest of the validation suite, arrive with
+//! `determinism` ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)). `mjk random` writes
+//! named random streams for statistical test suites. `run` and `replay`, and the rest of the
+//! validation suite, arrive with
 //! [#16](https://github.com/MatthewK84/MJKPhysics/issues/16) and
 //! [#17](https://github.com/MatthewK84/MJKPhysics/issues/17).
+
+mod random;
 
 use std::hint::black_box;
 use std::process::ExitCode;
@@ -14,8 +17,8 @@ use std::time::Instant;
 use mjk_sim::validation::determinism::{self, determinism_study};
 use mjk_sim::validation::integrators::{self, Method, integrator_study};
 
-const USAGE: &str =
-    "usage: mjk [--version | --help | validate (integrators [--timing] | determinism)]";
+const USAGE: &str = "usage: mjk [--version | --help | validate (integrators [--timing] | \
+                     determinism) | random <seed> <name>... --bytes <n>]";
 
 /// Step size and step count for `validate --timing`.
 const TIMING_RUN: (f64, u32) = (0.01, 10_000);
@@ -39,6 +42,7 @@ fn main() -> ExitCode {
             eprintln!("error: name a study: integrators or determinism\n{USAGE}");
             ExitCode::from(2)
         }
+        ["random", rest @ ..] => random::run(rest),
         _ => {
             eprintln!("error: unknown arguments `{}`\n{USAGE}", words.join(" "));
             ExitCode::from(2)

@@ -14,6 +14,7 @@ name = "mjk"
 path = "src/main.rs"
 
 [dependencies]
+mjk-math.workspace = true
 mjk-sim.workspace = true
 
 [lints]

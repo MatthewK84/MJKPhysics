@@ -73,27 +73,28 @@ impl Xoshiro256StarStar {
     /// The stream called `name` in a run seeded with `master_seed`, Eq. (DET-2). It is the same
     /// however many other streams exist and in whatever order they were made.
     ///
-    /// The first word of the state is the master seed mixed by one step of [`SplitMix64`]; the
-    /// other three are `SplitMix64` outputs seeded with the FNV-1a hash of the name XOR that
-    /// mixed seed. Both steps are bijections, so the state gives back the seed and then the name
-    /// hash: two streams start from the same state only if their seeds and their name hashes are
-    /// both equal. The second word, which alone decides the first draw, depends on both, so
-    /// streams in one run, and one stream across runs, start with different draws. The second and
-    /// third words come from two different `SplitMix64` states, so at most one is zero and the
-    /// state is never all zero.
+    /// The master seed is mixed by one step of [`SplitMix64`]. A second `SplitMix64`, seeded with
+    /// the FNV-1a hash of the name XOR that mixed seed, gives four outputs: the first three are
+    /// words 1 to 3 of the state, and the fourth, XOR the mixed seed, is word 0. So no word is
+    /// shared by the streams of one run.
+    ///
+    /// - Two streams start from the same state only if their seeds and their name hashes are
+    ///   both equal: word 1 gives back the second generator's seed, which gives the fourth
+    ///   output, which with word 0 gives back the mixed seed and so the master seed.
+    /// - Word 1, which alone decides the first draw, depends on both the seed and the name.
+    /// - Words 1 and 2 come from two different `SplitMix64` states, so at most one is zero and
+    ///   the state is never all zero.
     #[must_use]
     pub fn named(master_seed: u64, name: &str) -> Self {
         let mut hasher = StateHasher::new();
         hasher.write_bytes(name.as_bytes());
         let mixed_seed = SplitMix64::new(master_seed).next_u64();
-        let mut stream = SplitMix64::new(hasher.finish() ^ mixed_seed);
+        let mut chained = SplitMix64::new(hasher.finish() ^ mixed_seed);
+        let s1 = chained.next_u64();
+        let s2 = chained.next_u64();
+        let s3 = chained.next_u64();
         Self {
-            s: [
-                mixed_seed,
-                stream.next_u64(),
-                stream.next_u64(),
-                stream.next_u64(),
-            ],
+            s: [mixed_seed ^ chained.next_u64(), s1, s2, s3],
         }
     }
 

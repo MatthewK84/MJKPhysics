@@ -31,6 +31,92 @@ fn hash_f64s(values: &[f64]) -> u64 {
     hasher.finish()
 }
 
+// ---------------------------------------------------------------- independence of streams
+
+/// Samples per stream in the independence checks.
+const SAMPLES: usize = 100_000;
+
+/// Six standard deviations of the correlation of `SAMPLES` independent pairs, 6/√SAMPLES.
+const CORRELATION_LIMIT: f64 = 0.019;
+
+/// Lags compared in each direction.
+const MAX_LAG: usize = 4;
+
+/// Six standard deviations, the limit for one bit's imbalance.
+const IMBALANCE_LIMIT_SIGMA: f64 = 6.0;
+
+/// The three streams of the reference scenario, in pairs.
+const PAIRS: [(&str, &str); 3] = [
+    ("gyro", "accelerometer"),
+    ("gyro", "pilot"),
+    ("accelerometer", "pilot"),
+];
+
+fn count(n: usize) -> f64 {
+    f64::from(u32::try_from(n).unwrap_or(u32::MAX))
+}
+
+fn words(seed: u64, name: &str) -> Vec<u64> {
+    let mut rng = Xoshiro256StarStar::named(seed, name);
+    (0..SAMPLES).map(|_| rng.next_u64()).collect()
+}
+
+fn uniforms(seed: u64, name: &str) -> Vec<f64> {
+    let mut rng = Xoshiro256StarStar::named(seed, name);
+    (0..SAMPLES).map(|_| rng.next_f64()).collect()
+}
+
+/// Pearson's correlation of paired samples.
+fn pearson(pairs: &[(f64, f64)]) -> f64 {
+    let n = count(pairs.len());
+    let mean_a = pairs.iter().map(|p| p.0).sum::<f64>() / n;
+    let mean_b = pairs.iter().map(|p| p.1).sum::<f64>() / n;
+    let cov: f64 = pairs.iter().map(|p| (p.0 - mean_a) * (p.1 - mean_b)).sum();
+    let var_a: f64 = pairs.iter().map(|p| (p.0 - mean_a) * (p.0 - mean_a)).sum();
+    let var_b: f64 = pairs.iter().map(|p| (p.1 - mean_b) * (p.1 - mean_b)).sum();
+    cov / libm::sqrt(var_a * var_b)
+}
+
+/// The largest correlation magnitude between `a` and `b` shifted by up to `MAX_LAG` samples
+/// either way.
+fn worst_correlation(a: &[f64], b: &[f64]) -> f64 {
+    let mut worst: f64 = 0.0;
+    for lag in 0..=MAX_LAG {
+        let ahead: Vec<(f64, f64)> = a.iter().skip(lag).zip(b).map(|(x, y)| (*x, *y)).collect();
+        let behind: Vec<(f64, f64)> = a
+            .iter()
+            .zip(b.iter().skip(lag))
+            .map(|(x, y)| (*x, *y))
+            .collect();
+        worst = worst.max(pearson(&ahead).abs()).max(pearson(&behind).abs());
+    }
+    worst
+}
+
+/// The largest imbalance of any bit of `a XOR b` between zeros and ones, in standard
+/// deviations of a fair coin, √n/2.
+fn worst_bit_imbalance(a: &[u64], b: &[u64]) -> f64 {
+    let mut ones = [0_u32; 64];
+    for (x, y) in a.iter().zip(b) {
+        let z = x ^ y;
+        for (bit, total) in ones.iter_mut().enumerate() {
+            *total += u32::from((z >> bit) & 1 == 1);
+        }
+    }
+    let n = count(a.len().min(b.len()));
+    let sigma = libm::sqrt(n) / 2.0;
+    ones.iter()
+        .map(|total| (f64::from(*total) - n / 2.0).abs() / sigma)
+        .fold(0.0, f64::max)
+}
+
+/// Worst lagged correlation and worst bit imbalance between two streams.
+fn dependence(a: (u64, &str), b: (u64, &str)) -> (f64, f64) {
+    let correlation = worst_correlation(&uniforms(a.0, a.1), &uniforms(b.0, b.1));
+    let imbalance = worst_bit_imbalance(&words(a.0, a.1), &words(b.0, b.1));
+    (correlation, imbalance)
+}
+
 // ---------------------------------------------------------------- generators
 
 #[test]
@@ -115,7 +201,7 @@ fn a_named_stream_is_seeded_from_the_master_seed_and_its_name() {
     assert_eq!(
         gyro.state(),
         [
-            0xBDD7_3226_2FEB_6E95,
+            0xD187_DA3E_E553_5D14,
             0x8CEE_F3EC_DF02_E21D,
             0xF6C4_97A2_D244_EE2C,
             0xF99D_5D2A_FBDD_E68B,
@@ -125,24 +211,76 @@ fn a_named_stream_is_seeded_from_the_master_seed_and_its_name() {
         draws(&mut gyro, 3),
         [
             31_614_918_199_316_448,
-            14_130_086_764_394_278_411,
-            9_070_051_639_082_525_656,
+            14_212_494_446_362_214_933,
+            12_142_849_981_069_228_479,
         ]
     );
 }
 
 #[test]
-fn a_stream_state_is_the_mixed_seed_then_the_name_chained_to_it() {
+fn a_stream_state_is_the_name_chained_to_the_mixed_seed() {
     let state = Xoshiro256StarStar::named(42, "gyro").state();
     let mixed_seed = SplitMix64::new(42).next_u64();
     let mut chained = SplitMix64::new(hash_bytes(b"gyro") ^ mixed_seed);
-    let expected = [
-        mixed_seed,
-        chained.next_u64(),
-        chained.next_u64(),
-        chained.next_u64(),
-    ];
-    assert_eq!(state, expected);
+    let [c1, c2, c3, c4] = [(); 4].map(|()| chained.next_u64());
+    assert_eq!(state, [mixed_seed ^ c4, c1, c2, c3]);
+}
+
+#[test]
+fn no_word_is_shared_by_the_streams_of_a_run() {
+    let states =
+        ["gyro", "accelerometer", "pilot"].map(|n| Xoshiro256StarStar::named(42, n).state());
+    for (a, b) in [(0, 1), (0, 2), (1, 2)] {
+        for (word, (x, y)) in states[a].iter().zip(states[b]).enumerate() {
+            assert_ne!(*x, y, "streams {a} and {b}, word {word}");
+        }
+    }
+}
+
+#[test]
+fn streams_in_a_run_are_uncorrelated() {
+    for seed in [14, 42] {
+        for (a, b) in PAIRS {
+            let (correlation, imbalance) = dependence((seed, a), (seed, b));
+            assert!(
+                correlation < CORRELATION_LIMIT,
+                "seed {seed}, {a}/{b}: r = {correlation}"
+            );
+            assert!(
+                imbalance < IMBALANCE_LIMIT_SIGMA,
+                "seed {seed}, {a}/{b}: {imbalance} sigma"
+            );
+        }
+    }
+}
+
+#[test]
+fn adjacent_seeds_are_uncorrelated() {
+    // A Monte Carlo sweep runs seeds 0, 1, 2 and so on: neighbors must look independent.
+    for seed in [0, 1, 1000] {
+        let (correlation, imbalance) = dependence((seed, "gyro"), (seed + 1, "gyro"));
+        assert!(
+            correlation < CORRELATION_LIMIT,
+            "seeds {seed}, {}: r = {correlation}",
+            seed + 1
+        );
+        assert!(
+            imbalance < IMBALANCE_LIMIT_SIGMA,
+            "seeds {seed}, {}: {imbalance} sigma",
+            seed + 1
+        );
+    }
+}
+
+#[test]
+fn the_independence_checks_detect_a_dependent_stream() {
+    // The same stream one draw later is perfectly correlated at lag 1, and the same stream is
+    // all zeros under XOR, so each check fails as it should.
+    let a = uniforms(5, "gyro");
+    let shifted: Vec<f64> = a.iter().skip(1).copied().collect();
+    assert!(worst_correlation(&a, &shifted) > 0.999);
+    let w = words(5, "gyro");
+    assert!(worst_bit_imbalance(&w, &w) > 300.0);
 }
 
 #[test]
@@ -231,9 +369,9 @@ fn uniform_samples_have_the_right_mean_and_spread() {
 fn gaussian_samples_match_the_box_muller_reference() {
     let mut rng = Xoshiro256StarStar::named(7, "turbulence");
     let expected = [
-        -0.919_986_653_515_486_3,
-        2.909_483_802_984_310_4,
-        -0.087_976_056_573_552_15,
+        -1.138_667_779_224_269_4,
+        -0.321_238_976_261_992_8,
+        -0.343_531_749_566_748_87,
     ];
     for value in expected {
         let sample = rng.next_gaussian();
