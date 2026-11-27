@@ -104,7 +104,7 @@ ellipsoid,
 \qquad\text{(ATM-9)}
 ```
 
-and its second-order expansion in height above it (NIMA TR8350.2, eq. 4-3),
+and its second-order expansion in height above it, as NGA.STND.0036 gives them (eqs. 4-1 and 4-3),
 
 ```math
 \gamma_h = \gamma(\varphi)\left[1 - \frac{2}{a}\left(1 + f + m - 2f\sin^2\varphi\right)h + \frac{3h^2}{a^2}\right]
@@ -135,17 +135,32 @@ use the atmosphere (M2) will decide how such a run fails.
 | $`R^*`$ | Gas constant (1976 value, not CODATA's 8.314 462 618) | J/(mol·K) | 8.31432 | USSA-1976 |
 | $`M_0`$ | Mean molar mass of air | kg/mol | 0.0289644 | USSA-1976 |
 | $`r_0`$ | Earth radius for geopotential altitude | m | 6 356 766 | USSA-1976 |
-| $`a`$, $`1/f`$ | WGS-84 semi-major axis, inverse flattening | m, — | 6 378 137, 298.257223563 | TR8350.2 Table 3.1 |
-| $`GM`$, $`\omega`$ | Earth's gravitational constant, angular velocity | m³/s², rad/s | $`3.986004418\times10^{14}`$, $`7.292115\times10^{-5}`$ | TR8350.2 Table 3.1 |
+| $`a`$, $`1/f`$ | WGS-84 semi-major axis, inverse flattening | m, — | 6 378 137, 298.257223563 | NGA.STND.0036 Table 3.1 |
+| $`GM`$, $`\omega`$ | Earth's gravitational constant, angular velocity | m³/s², rad/s | $`3.986004418\times10^{14}`$, $`7.292115\times10^{-5}`$ | NGA.STND.0036 Table 3.1 |
 | $`\gamma_e`$, $`\gamma_p`$ | Normal gravity at the equator and the poles | m/s² | 9.780325335904, 9.832184937863 | Derived, below |
 | $`k`$, $`e^2`$, $`m`$ | Somigliana's constant, eccentricity squared, gravity ratio | — | 0.001931852652458, 0.006694379990141, 0.003449786506841 | Derived, below |
 
-The four WGS-84 defining parameters come from TR8350.2 as published in GeographicLib's
-`Constants.hpp`; NGA's own copy of TR8350.2 was unreachable when this page was written. The
-derived constants are computed from them with the closed formulas of the level ellipsoid
-(Heiskanen and Moritz, 1967) at 40 significant digits. Computing $`q_0`$ in double precision loses
-about $`3\times10^{-13}`$ of its value to cancellation, which moves $`k`$ in its eleventh significant
-figure; that is why the code stores the 40-digit values and a test recomputes them.
+The four WGS-84 defining parameters are those of NGA.STND.0036, Table 3.1. The derived constants
+are computed from them with the closed formulas of the level ellipsoid (Heiskanen and Moritz,
+1967) at 40 significant digits, and agree with the standard's printed values to the last digit:
+
+| Constant | NGA.STND.0036 | Derived here |
+|---|---|---|
+| $`f`$ (Table 3.5) | $`3.3528106647475\times10^{-3}`$ | $`3.3528106647474805\times10^{-3}`$ |
+| $`b`$ (Table 3.5) | 6 356 752.3142 m | 6 356 752.314245 m |
+| $`e^2`$ (Table 3.5) | $`6.694379990141\times10^{-3}`$ | $`6.694379990141317\times10^{-3}`$ |
+| $`\gamma_e`$ (Table 3.6) | 9.7803253359 m/s² | 9.78032533590389 m/s² |
+| $`\gamma_p`$ (Table 3.6) | 9.8321849379 m/s² | 9.83218493786340 m/s² |
+| $`k`$ (Table 3.6) | $`1.931852652458\times10^{-3}`$ | $`1.931852652458274\times10^{-3}`$ |
+| $`m`$ (Table 3.6) | $`3.449786506841\times10^{-3}`$ | $`3.449786506840845\times10^{-3}`$ |
+
+**Precision matters in the last digits.** Computing $`q_0`$ directly in double precision loses about
+$`3\times10^{-13}`$ of its value to cancellation, which gives $`k = 1.93185265241\times10^{-3}`$:
+44 units off in the standard's last printed digit. That value is quoted in some secondary
+sources. The code stores the 40-digit constants, which match the standard, and a test fails if a
+double-precision recomputation replaces them. The difference is about $`10^{-10}`$ m/s² in
+gravity, so nothing physical depends on it; what depends on it is whether the constants can be
+traced to the standard.
 
 ## Implementation notes
 
@@ -175,6 +190,7 @@ build to print it byte for byte.*
 | A +15 K offset | T up 15 K everywhere; sea-level pressure unchanged; pressure higher at every altitude above sea level | `an_offset_shifts_temperature_and_keeps_sea_level_pressure` |
 | The model's range and invalid inputs | errors at −5 km − 1 mm and 20 km + 1 mm, and for non-finite values | `the_model_covers_exactly_its_range`, `an_offset_that_is_not_physical_is_rejected` |
 | WGS-84 derived constants | recomputed from a, f, GM, ω | `the_derived_constants_follow_from_the_defining_parameters` |
+| WGS-84 derived constants against NGA.STND.0036, Tables 3.5 and 3.6 | f, b, e², γe, γp, k and m within half a unit of the last printed digit; a double-precision derivation of k would miss by 44 units | `the_derived_constants_agree_with_the_standard_to_the_last_printed_digit`, `a_double_precision_derivation_would_miss_the_published_k` |
 | Normal gravity against the exact field of the level ellipsoid, at 0°, 45° and 90° from −5 to 20 km | within $`1.5\times10^{-6}`$ m/s²; on the ellipsoid within $`10^{-9}`$ | `normal_gravity_matches_the_exact_field_from_minus_5_to_20_km` |
 | Altitude from the field elevation, and air and gravity there | equal to evaluating the models directly | `the_environment_measures_altitude_from_the_field` |
 
@@ -188,8 +204,12 @@ temperature would get the sign of that effect wrong up high.
 
 - NOAA, NASA, USAF, *U.S. Standard Atmosphere, 1976*, NOAA-S/T 76-1562, 1976. NASA scan:
   NTRS 19770009539. Table I, pp. 53–61; Table III, pp. 101–109.
+- NGA, *Department of Defense World Geodetic System 1984: Its Definition and Relationships with
+  Local Geodetic Systems*, NGA.STND.0036_1.0.0_WGS84, version 1.0.0, 2014-07-08: Table 3.1
+  (p. 3-4), Table 3.5 (p. 3-9), Table 3.6 (p. 3-10), eqs. (4-1) and (4-3) (pp. 4-1, 4-3).
 - NIMA, *Department of Defense World Geodetic System 1984: Its Definition and Relationships with
-  Local Geodetic Systems*, TR8350.2, 3rd ed., Amendment 1, 2000.
+  Local Geodetic Systems*, TR8350.2, 3rd ed., Amendment 1, 2000: the standard's predecessor.
 - W. A. Heiskanen, H. Moritz, *Physical Geodesy*, W. H. Freeman, 1967: the normal gravity field
   of the level ellipsoid (ch. 2).
-- C. F. F. Karney, GeographicLib, `Constants.hpp`: the WGS-84 defining parameters.
+- Department of Defense, *Performance Specification: World Magnetic Model (WMM)*,
+  MIL-PRF-89500B, 2019, Appendix A, eq. (8): the same $`a`$ and $`1/f`$.

@@ -2,8 +2,8 @@
 //!
 //! Normal gravity is the gravity of the WGS-84 reference ellipsoid, earth rotation included. On
 //! the ellipsoid it follows Somigliana's closed form, Eq. (ATM-9); above it, the second-order
-//! expansion in height of NIMA TR8350.2, Eq. (ATM-10), which stays within 1.5 × 10⁻⁶ m/s² of the
-//! exact field from −5 km to 20 km.
+//! expansion in height, Eq. (ATM-10). Both are those of `NGA.STND.0036`, eqs. (4-1) and (4-3).
+//! The expansion stays within 1.5 × 10⁻⁶ m/s² of the exact field from −5 km to 20 km.
 
 use mjk_math::{Vec3, World};
 
@@ -12,10 +12,12 @@ use crate::error::EnvironmentError;
 /// Standard gravity, m/s².
 pub const G0_M_S2: f64 = 9.806_65;
 
-/// WGS-84 constants. The four defining parameters (a, 1/f, GM, ω) are those of NIMA TR8350.2,
-/// Table 3.1, as published in `GeographicLib`'s `Constants.hpp`. The derived constants are computed
-/// from them with the closed formulas of the level ellipsoid (Heiskanen and Moritz, 1967) at 40
-/// significant digits and rounded to double precision; a test recomputes them.
+/// WGS-84 constants, as defined by `NGA.STND.0036_1.0.0_WGS84` (2014).
+///
+/// The four defining parameters (a, 1/f, GM, ω) are those of its Table 3.1. The derived constants
+/// are computed from them with the closed formulas of the level ellipsoid (Heiskanen and Moritz,
+/// 1967) at 40 significant digits and rounded to double precision. Tests recompute them and check
+/// them against the standard's Tables 3.5 and 3.6, which they match to the last printed digit.
 pub mod wgs84 {
     /// Semi-major axis, m.
     pub const SEMI_MAJOR_AXIS_M: f64 = 6_378_137.0;
