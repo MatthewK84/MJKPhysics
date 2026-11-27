@@ -8,10 +8,12 @@ enforced by tools wherever a tool can enforce them, and by review where none can
 1. Pick an issue. Each has a scope, acceptance criteria, references and the issues it depends on.
    The project principles and the shared definition of done are in
    [#1](https://github.com/MatthewK84/MJKPhysics/issues/1).
-2. Branch from `main`, one issue per branch.
+2. Branch from `main`, one issue per branch. Nothing is pushed to `main` directly: it is
+   protected (below).
 3. Open a pull request that says `Closes #N`, ticks the issue's acceptance criteria and explains
    how each was verified.
-4. CI must be green before review. Squash or rebase onto `main`; keep history linear.
+4. Turn on auto-merge. The pull request is rebased onto `main` once all fourteen required checks
+   pass, and GitHub then deletes its branch. History stays linear.
 
 Commit subjects are imperative and under about 72 characters ("Add RK4 integrator", not "Added").
 
@@ -70,7 +72,7 @@ fails within a day. Each check is its own job, so each can be required before me
 | `Clippy` | `cargo clippy --workspace --all-targets --locked -- -D warnings` |
 | `Tests (Linux)` | `cargo test --workspace --locked` |
 | `Crate layering` | `cargo xtask layering` |
-| `Power of Ten` | `cargo xtask standards`: recursion, loop bounds, macros, conditional compilation, pointers, assertion density |
+| `Power of Ten` | `cargo xtask standards`: recursion, loop bounds, macros, conditional compilation, pointers, assertion density; the allocator crate's lint table; the branch protection ruleset against the workflows |
 | `Supply chain` | `cargo deny --locked check` against `deny.toml` |
 | `Spelling` | `typos` with the US locale (`typos.toml`): typos and British spellings, in prose and identifiers |
 | `Coverage` | engine line coverage of at least 90 %, reported in the job summary |
@@ -97,9 +99,26 @@ Scheduled workflows, which only run from the default branch:
   job, from an archive pinned by its SHA-256.
 - Dependabot (`.github/dependabot.yml`) opens grouped updates for actions, cargo and npm weekly.
 
-**Branch protection.** To make CI block merges, a repository admin enables a rule for `main`
-(Settings → Rules → Rulesets, or Settings → Branches): require a pull request, require status
-checks to pass, and select the fourteen checks in the table above.
+**Branch protection.** `main` is protected by the ruleset in
+[`.github/rulesets/main.json`](.github/rulesets/main.json), versioned here so it can be reviewed:
+
+- **No direct pushes:** every change arrives through a pull request, merged by rebase. No
+  approvals are required, because GitHub does not let authors approve their own pull requests.
+- **Checks first:** the fourteen checks in the table above must pass on a branch that is up to
+  date with `main`.
+- **History is fixed:** `main` cannot be force-pushed or deleted, and history stays linear.
+- **No bypass:** the rule applies to admins too. In an emergency an admin switches the ruleset off
+  in Settings, which the audit log records.
+
+`cargo xtask standards` fails if the ruleset and the workflows disagree: a required check that no
+pull-request job reports, which would make every pull request wait forever, or a pull-request job
+the ruleset leaves out. It also fails if the file gains a bypass actor or stops being enforced.
+Jobs with their own `if:`, such as the Pages publish, and scheduled workflows are not required.
+
+GitHub does not apply the file by itself; a repository admin imports it (Settings → Rules →
+Rulesets → New ruleset → Import a ruleset) and, under Settings → General, enables *Allow
+auto-merge* and *Automatically delete head branches*. A change to the file is applied the same
+way.
 
 ## Engineering standards
 

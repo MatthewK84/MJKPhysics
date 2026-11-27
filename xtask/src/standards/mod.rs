@@ -10,6 +10,7 @@
 mod callgraph;
 mod ir_build;
 mod lint_table;
+mod rulesets;
 mod source;
 
 use std::fs;
@@ -44,7 +45,11 @@ pub fn run(root: &Path) -> Result<usize, String> {
     for problem in &table_problems {
         eprintln!("lint table: {problem}");
     }
-    Ok(source_problems + recursion_problems + table_problems.len())
+    let ruleset_problems = rulesets::check(root)?;
+    for problem in &ruleset_problems {
+        eprintln!("branch protection: {problem}");
+    }
+    Ok(source_problems + recursion_problems + table_problems.len() + ruleset_problems.len())
 }
 
 /// Every workspace source tree, as (crate, directory).

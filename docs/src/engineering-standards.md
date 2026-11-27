@@ -13,9 +13,15 @@ failure modes can be checked by a tool rather than trusted.
 
 | When | What runs |
 |---|---|
-| Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the native-against-WebAssembly comparison, the viewer and script checks, the book build |
+| Every pull request, before it can merge, and every push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the native-against-WebAssembly comparison, the viewer and script checks, the book build |
 | Daily | The same suite, so a newly published advisory against a locked dependency fails within a day |
 | Weekly | Tests on macOS and Windows; mutation testing of the whole engine; PractRand on interleaved random streams; Dependabot updates |
+
+The pull-request checks are required, not advisory. `main` accepts a change only through a pull
+request that has passed all fourteen, and no one can bypass the rule, admins included. The rule is
+the versioned ruleset `.github/rulesets/main.json`, and `cargo xtask standards` fails if it and
+the workflows disagree about which checks exist
+([CONTRIBUTING](https://github.com/MatthewK84/MJKPhysics/blob/main/CONTRIBUTING.md#continuous-integration)).
 
 ## Rust: the Power of Ten
 
