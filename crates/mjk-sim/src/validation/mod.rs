@@ -3,5 +3,6 @@
 //! Each study returns its results as data and formats them as Markdown; the book includes the
 //! generated tables, and a test fails if a committed table no longer matches the code.
 
+pub mod atmosphere;
 pub mod determinism;
 pub mod integrators;

@@ -16,6 +16,7 @@
 - [Models](models/README.md)
   - [Rigid-body dynamics](models/rigid-body.md)
   - [Integrators](models/integrators.md)
+  - [Atmosphere and gravity](models/atmosphere.md)
 - [Validation](validation/README.md)
 - [Airframes](airframes/README.md)
 

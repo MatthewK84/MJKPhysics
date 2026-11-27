@@ -248,7 +248,7 @@ jobs:
         run: |
           wasm=target/wasm32-wasip1/release/mjk.wasm
           status=0
-          for pair in integrators:integrator-study determinism:determinism; do
+          for pair in integrators:integrator-study determinism:determinism atmosphere:atmosphere; do
             study=${pair%%:*}
             table="docs/src/validation/${pair#*:}.md"
             target/release/mjk validate "$study" > "$RUNNER_TEMP/$study-native.md"
