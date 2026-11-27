@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn quarter_turn_about_z_takes_x_to_y() {
         let half = std::f64::consts::FRAC_PI_4;
-        let q = UnitQuat::new(Quat::new(half.cos(), 0.0, 0.0, half.sin())).expect("unit");
+        let q = UnitQuat::new(Quat::new(libm::cos(half), 0.0, 0.0, libm::sin(half))).expect("unit");
         let [x, y, z] = q.rotate_array([1.0, 0.0, 0.0]);
         assert!(x.abs() < 1e-15 && (y - 1.0).abs() < 1e-15 && z.abs() < 1e-15);
     }

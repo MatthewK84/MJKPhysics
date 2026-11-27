@@ -5,6 +5,8 @@
 
 use std::fmt;
 
+use mjk_math::{StateHash, StateHasher};
+
 /// The default physics rate.
 pub const DEFAULT_PHYSICS_HZ: u32 = 1000;
 
@@ -108,6 +110,13 @@ impl Clock {
     /// Moves to the next tick.
     pub(crate) const fn advance(&mut self) {
         self.tick = self.tick.saturating_add(1);
+    }
+}
+
+impl StateHash for Clock {
+    fn hash_state(&self, hasher: &mut StateHasher) {
+        self.tick.hash_state(hasher);
+        self.rate_hz.hash_state(hasher);
     }
 }
 

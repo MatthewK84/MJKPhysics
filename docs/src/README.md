@@ -10,9 +10,9 @@ every parameter, and how the implementation was checked.
 > the error and configuration model. Milestone M1, the math and rigid-body core, is under way:
 > [frame-typed math](math-types.md), the [SO(3) maps](so3.md) and
 > [rigid-body dynamics](models/rigid-body.md) and the [integrators](models/integrators.md),
-> including the Lie-group method, and the [world loop](architecture.md#one-simulation-step) are
-> done, and determinism and replay ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14))
-> are next. The book grows with the
+> including the Lie-group method, the [world loop](architecture.md#one-simulation-step), and
+> [determinism and replay](determinism.md) are done, and gravity and the standard atmosphere
+> ([#15](https://github.com/MatthewK84/MJKPhysics/issues/15)) are next. The book grows with the
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 

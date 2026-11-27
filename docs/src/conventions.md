@@ -360,8 +360,10 @@ bare `ct`.
   | `_s` | second | `_deg`, `_rpm` | input/output only |
 
 - **Floating point.** The engine computes in `f64`. Transcendental functions go through `libm` so
-  native and WebAssembly builds agree bit for bit
-  ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
+  native and WebAssembly builds agree bit for bit, and Clippy rejects the standard library's
+  versions. Rust never fuses `a * b + c` into one operation on its own; an explicit fused
+  multiply-add is written `libm::fma`. Arithmetic and `sqrt` are correctly rounded by IEEE 754
+  ([Determinism and replay](determinism.md)).
 - **Time.** Simulation time is an integer tick count; seconds are derived as $`k \Delta t`$ and
   never accumulated by repeated addition.
 

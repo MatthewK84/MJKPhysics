@@ -135,8 +135,8 @@ fn jacobi_step(sym: Sym, columns: [[f64; 3]; 3], plane: Plane) -> (Sym, [[f64; 3
         return (sym, columns);
     }
     let theta = (qq - pp) / (2.0 * pq);
-    let tangent = theta.signum() / (theta.abs() + theta.mul_add(theta, 1.0).sqrt());
-    let cos = 1.0 / tangent.mul_add(tangent, 1.0).sqrt();
+    let tangent = theta.signum() / (theta.abs() + libm::fma(theta, theta, 1.0).sqrt());
+    let cos = 1.0 / libm::fma(tangent, tangent, 1.0).sqrt();
     let sin = tangent * cos;
     let rotated = (
         pp - tangent * pq,

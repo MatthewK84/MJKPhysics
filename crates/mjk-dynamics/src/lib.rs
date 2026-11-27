@@ -8,16 +8,18 @@
 //!   ([#11](https://github.com/MatthewK84/MJKPhysics/issues/11),
 //!   [#12](https://github.com/MatthewK84/MJKPhysics/issues/12));
 //! - the world loop and its multi-rate scheduler
-//!   ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)).
+//!   ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13));
+//! - state checkpoints and input replay
+//!   ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
 //!
-//! Will hold determinism and replay ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)),
-//! and trim and linearization for fixed-wing analysis
+//! Will hold trim and linearization for fixed-wing analysis
 //! ([#47](https://github.com/MatthewK84/MJKPhysics/issues/47),
 //! [#48](https://github.com/MatthewK84/MJKPhysics/issues/48)).
 
 mod clock;
 mod integrator;
 pub mod mass;
+mod replay;
 mod rigid_body;
 mod rigid_body_system;
 mod world;
@@ -28,6 +30,7 @@ pub use integrator::{
     Coordinates, ExplicitEuler, Integrator, IntegratorKind, LieSystem, Rk4, Rkmk4,
     SemiImplicitEuler, System,
 };
+pub use replay::{Checkpoint, Checkpoints, InputEvent, InputLog, InputModel, RecordError, Replay};
 pub use rigid_body::{RigidBodyState, StateDerivative, derivative};
 pub use rigid_body_system::{
     LoadModel, Loads, RigidBodyCoordinates, RigidBodySystem, RigidBodyTangent,

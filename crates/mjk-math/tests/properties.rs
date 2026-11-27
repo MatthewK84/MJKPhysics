@@ -136,7 +136,7 @@ proptest! {
         b in matrix::<Body>(),
     ) {
         prop_assert_eq!(a.transpose().transpose(), a);
-        let scale = (a.max_abs() * b.max_abs()).powi(3).max(1.0);
+        let scale = libm::pow(a.max_abs() * b.max_abs(), 3.0).max(1.0);
         let det_product = (a * b).determinant() - a.determinant() * b.determinant();
         prop_assert!(det_product.abs() <= TOL * scale);
     }

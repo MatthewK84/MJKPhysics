@@ -8,6 +8,7 @@
 - [Math types](math-types.md)
 - [SO(3) maps](so3.md)
 - [Architecture](architecture.md)
+- [Determinism and replay](determinism.md)
 - [Configuration files](configuration.md)
 
 # Physics

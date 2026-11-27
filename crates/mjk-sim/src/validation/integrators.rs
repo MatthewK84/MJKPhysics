@@ -3,7 +3,7 @@
 //!
 //! Every number is computed with bit-exact arithmetic, so the table is identical on every run
 //! and platform. Cost is reported as operation counts for the same reason; wall-clock time is
-//! measured separately by `mjk validate --timing`.
+//! measured separately by `mjk validate integrators --timing`.
 
 use std::ops::{Add, Mul};
 
@@ -126,7 +126,7 @@ const HEADER: &str = "| Method | h (s) | Steps | Energy drift | Angular-momentum
                       | Unit-norm error | Rate evaluations per step | Exp maps per step \
                       | J_r⁻¹ per step |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|\n";
 
-/// The study table in Markdown, as `mjk validate` prints it and the book includes it.
+/// The study table in Markdown, as `mjk validate integrators` prints it and the book includes it.
 #[must_use]
 pub fn markdown(rows: &[StudyRow]) -> String {
     let lines: String = rows.iter().map(table_line).collect();

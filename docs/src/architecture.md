@@ -38,8 +38,9 @@ CI enforces them, are on the [Engineering standards](engineering-standards.md) p
   Engine crates take configuration as text and return results as data
   ([Configuration files](configuration.md)).
 - **Fixed-step and deterministic.** Physics advances in fixed steps, with subsystems at integer
-  rate divisors. The same inputs and seed produce bit-identical state on every platform
-  ([ADR 0002](adr/0002-integrator-design.md)).
+  rate divisors. The same inputs and seed produce bit-identical state on every platform, and a
+  recorded run replays exactly ([ADR 0002](adr/0002-integrator-design.md),
+  [Determinism and replay](determinism.md)).
 - **No heap allocation per step.** Everything `World::step` needs is allocated when the world is
   built; a counting allocator proves it in CI ([Engineering standards](engineering-standards.md)).
 - **No panics.** Fallible operations return `Result<_, EngineError>` from `mjk-core`.

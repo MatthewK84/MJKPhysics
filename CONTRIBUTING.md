@@ -77,6 +77,7 @@ fails within a day. Each check is its own job, so each can be required before me
 | `Mutation testing (changed lines)` | `cargo mutants --in-diff` on the lines the change touches; any surviving mutant fails |
 | `API docs` | `cargo doc --workspace --no-deps --locked` with `RUSTDOCFLAGS=-D warnings` |
 | `WebAssembly build` | release build of `mjk-wasm` for `wasm32-unknown-unknown`; raw and gzip sizes go to the job summary |
+| `Native and WebAssembly agree` | builds `mjk` natively and for `wasm32-wasip1`, runs both (the WASI build under Node, `viewer/scripts/run-wasi.mjs`), and requires each study's output to match the other and the book's table byte for byte |
 | `Viewer` | `npm audit`; typecheck, lint and format check of `viewer/`, the README hero and the book scripts; `npm run lint:ui` |
 | `Docs site` | `cargo xtask equations`, type-check of `docs/theme/math.js`, `mdbook build docs` (workflow `docs.yml`) |
 
@@ -96,7 +97,7 @@ Scheduled workflows, which only run from the default branch:
 
 **Branch protection.** To make CI block merges, a repository admin enables a rule for `main`
 (Settings → Rules → Rulesets, or Settings → Branches): require a pull request, require status
-checks to pass, and select the thirteen checks in the table above.
+checks to pass, and select the fourteen checks in the table above.
 
 ## Engineering standards
 
@@ -131,7 +132,9 @@ Project rules on top of the ten:
 - **Declare all data.** Public items are documented (`missing_docs`); physical quantities carry
   units in their names (`mass_kg`, `omega_rad_s`), which review checks.
 - **Transcendental functions go through `libm`**, so native and WebAssembly builds produce
-  identical bits ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)).
+  identical bits. Clippy rejects the standard library's versions, and `mul_add`, through
+  `disallowed-methods` in `clippy.toml`; write `libm::fma` for an explicit fused multiply-add
+  ([Determinism and replay](docs/src/determinism.md)).
 - **Conventions are fixed**: NED world frame, FRD body frame, Hamilton scalar-first quaternions,
   SI units with unit suffixes. Use the symbols and equation IDs in
   [`docs/src/conventions.md`](docs/src/conventions.md).

@@ -13,7 +13,7 @@ failure modes can be checked by a tool rather than trusted.
 
 | When | What runs |
 |---|---|
-| Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the viewer and script checks, the book build |
+| Every pull request and push to `main` | Formatting, Clippy, tests, crate layering, the Power of Ten checks, cargo-deny, spelling, coverage, mutation testing of the changed lines, API docs, the WebAssembly build, the native-against-WebAssembly comparison, the viewer and script checks, the book build |
 | Daily | The same suite, so a newly published advisory against a locked dependency fails within a day |
 | Weekly | Tests on macOS and Windows; mutation testing of the whole engine; Dependabot updates |
 
@@ -61,7 +61,9 @@ visitor, which recurses with the depth of the source's own nesting.
 Rule 3 is checked by running the world under a counting global allocator: a test binary built
 without the test harness, so no other thread allocates while it measures, takes $`10^5`$ steps
 with RK4 and with RKMK4 and fails if the allocation count moves. Planting a single `Vec` in a
-500 Hz controller makes it report 55 050 allocations, one per controller run.
+500 Hz controller makes it report 55 050 allocations, one per controller run. The same test
+records 1000 checkpoint hashes and 1000 inputs and replays them; a checkpoint record that skips
+reserving its room reports 9 allocations as it grows.
 
 Implementing `GlobalAlloc` is unsafe by definition, so that allocator is the repository's only
 `unsafe` code. It lives in a test-support crate, `mjk-alloc-counter`: every method forwards to the
@@ -70,6 +72,14 @@ and the layering check lets crates use it only as a development dependency. Ever
 forbids `unsafe` outright. Because Cargo cannot override one workspace lint, the crate repeats
 the whole lint table, and `cargo xtask standards` fails if the copy differs from the workspace's
 in anything but `unsafe_code` and the `SAFETY:` comment rule.
+
+### Bit-exact arithmetic
+
+Clippy's `disallowed-methods` list rejects the standard library's transcendental functions and
+`mul_add`, for `f64` and `f32` and in tests too, so every target computes them with the same
+`libm` code. The CI job *Native and WebAssembly agree* runs both validation studies natively and
+as a WASI build under Node, and fails on any byte that differs from the other run or from the
+book ([Determinism and replay](determinism.md)).
 
 ### Nesting
 

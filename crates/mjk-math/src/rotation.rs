@@ -149,7 +149,8 @@ mod tests {
     #[test]
     fn yaw_of_ninety_degrees_points_the_nose_east() {
         let half = std::f64::consts::FRAC_PI_4;
-        let yaw = UnitQuat::new(Quat::new(half.cos(), 0.0, 0.0, half.sin())).expect("unit");
+        let yaw =
+            UnitQuat::new(Quat::new(libm::cos(half), 0.0, 0.0, libm::sin(half))).expect("unit");
         let q_wb: Rotation<World, Body> = Rotation::from_unit_quat(yaw);
         let nose_w = q_wb.rotate(Vec3::new(1.0, 0.0, 0.0));
         assert!(nose_w.x.abs() < 1e-15 && (nose_w.y - 1.0).abs() < 1e-15);

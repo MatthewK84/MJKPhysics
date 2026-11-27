@@ -4,7 +4,7 @@
 use std::ops::{Add, Mul};
 
 use mjk_math::so3::right_jacobian_inverse;
-use mjk_math::{Body, Quat, Rotation, UnitQuat, Vec3, World};
+use mjk_math::{Body, Quat, Rotation, StateHash, StateHasher, UnitQuat, Vec3, World};
 
 use crate::integrator::{Coordinates, LieSystem, System};
 use crate::mass::MassProperties;
@@ -43,6 +43,15 @@ impl RigidBodyCoordinates {
             q_wb: Rotation::from_unit_quat(q_wb),
             omega_rad_s: self.angular_velocity,
         })
+    }
+}
+
+impl StateHash for RigidBodyCoordinates {
+    fn hash_state(&self, hasher: &mut StateHasher) {
+        self.position.hash_state(hasher);
+        self.velocity.hash_state(hasher);
+        self.attitude.hash_state(hasher);
+        self.angular_velocity.hash_state(hasher);
     }
 }
 

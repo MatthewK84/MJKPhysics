@@ -1,7 +1,8 @@
 //! The `mjk` command-line tool.
 //!
-//! A front end, not part of the engine. `mjk validate` prints the validation tables that the book
-//! includes ([#12](https://github.com/MatthewK84/MJKPhysics/issues/12)); `run` and `replay`, and
+//! A front end, not part of the engine. `mjk validate <study>` prints a validation table that the
+//! book includes: `integrators` ([#12](https://github.com/MatthewK84/MJKPhysics/issues/12)) or
+//! `determinism` ([#14](https://github.com/MatthewK84/MJKPhysics/issues/14)). `run` and `replay`, and
 //! the rest of the validation suite, arrive with
 //! [#16](https://github.com/MatthewK84/MJKPhysics/issues/16) and
 //! [#17](https://github.com/MatthewK84/MJKPhysics/issues/17).
@@ -10,9 +11,11 @@ use std::hint::black_box;
 use std::process::ExitCode;
 use std::time::Instant;
 
-use mjk_sim::validation::integrators::{Method, integrator_study, markdown};
+use mjk_sim::validation::determinism::{self, determinism_study};
+use mjk_sim::validation::integrators::{self, Method, integrator_study};
 
-const USAGE: &str = "usage: mjk [--version | --help | validate [--timing]]";
+const USAGE: &str =
+    "usage: mjk [--version | --help | validate (integrators [--timing] | determinism)]";
 
 /// Step size and step count for `validate --timing`.
 const TIMING_RUN: (f64, u32) = (0.01, 10_000);
@@ -29,8 +32,13 @@ fn main() -> ExitCode {
             println!("mjk {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
-        ["validate"] => validate(),
-        ["validate", "--timing"] => timing(),
+        ["validate", "integrators"] => validate_integrators(),
+        ["validate", "integrators", "--timing"] => timing(),
+        ["validate", "determinism"] => validate_determinism(),
+        ["validate"] => {
+            eprintln!("error: name a study: integrators or determinism\n{USAGE}");
+            ExitCode::from(2)
+        }
         _ => {
             eprintln!("error: unknown arguments `{}`\n{USAGE}", words.join(" "));
             ExitCode::from(2)
@@ -39,10 +47,10 @@ fn main() -> ExitCode {
 }
 
 /// Prints the integrator study table. The output is identical on every run and platform.
-fn validate() -> ExitCode {
+fn validate_integrators() -> ExitCode {
     match integrator_study() {
         Ok(rows) => {
-            print!("{}", markdown(&rows));
+            print!("{}", integrators::markdown(&rows));
             ExitCode::SUCCESS
         }
         Err(error) => {
@@ -52,7 +60,22 @@ fn validate() -> ExitCode {
     }
 }
 
-/// Prints the wall-clock time per step of each method. Unlike `validate`, the numbers depend on
+/// Prints the determinism study table: the reference run's checkpoint hashes beside those of a
+/// replay of its inputs. The output is identical on every run and platform.
+fn validate_determinism() -> ExitCode {
+    match determinism_study() {
+        Ok((recorded, replayed)) => {
+            print!("{}", determinism::markdown(&recorded, &replayed));
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// Prints the wall-clock time per step of each method. Unlike the study, the numbers depend on
 /// the machine and vary between runs; build with `--release` for meaningful values.
 fn timing() -> ExitCode {
     let (dt_s, steps) = TIMING_RUN;

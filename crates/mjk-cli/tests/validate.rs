@@ -1,26 +1,41 @@
-//! `mjk validate` (#12): its output is identical on every run and is what the book publishes.
+//! `mjk validate` (#12, #14): each study's output is identical on every run and is what the book
+//! publishes.
 
 use std::io;
 use std::process::{Command, Output};
 
-const PUBLISHED: &str = include_str!("../../../docs/src/validation/integrator-study.md");
+const INTEGRATORS: &str = include_str!("../../../docs/src/validation/integrator-study.md");
+const DETERMINISM: &str = include_str!("../../../docs/src/validation/determinism.md");
 
 fn mjk(args: &[&str]) -> io::Result<Output> {
     Command::new(env!("CARGO_BIN_EXE_mjk")).args(args).output()
 }
 
 #[test]
-fn validate_is_byte_identical_and_matches_the_book() {
-    let first = mjk(&["validate"]).expect("the mjk binary runs");
-    let second = mjk(&["validate"]).expect("the mjk binary runs");
-    assert!(first.status.success());
-    assert_eq!(first.stdout, second.stdout);
-    assert_eq!(String::from_utf8_lossy(&first.stdout), PUBLISHED);
+fn each_study_is_byte_identical_and_matches_the_book() {
+    for (study, published) in [("integrators", INTEGRATORS), ("determinism", DETERMINISM)] {
+        let first = mjk(&["validate", study]).expect("the mjk binary runs");
+        let second = mjk(&["validate", study]).expect("the mjk binary runs");
+        assert!(first.status.success(), "{study}");
+        assert_eq!(first.stdout, second.stdout, "{study}");
+        assert_eq!(String::from_utf8_lossy(&first.stdout), published, "{study}");
+    }
+}
+
+#[test]
+fn validate_without_a_study_names_the_choices() {
+    let output = mjk(&["validate"]).expect("the mjk binary runs");
+    assert_eq!(output.status.code(), Some(2));
+    let text = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        text.contains("name a study: integrators or determinism"),
+        "{text}"
+    );
 }
 
 #[test]
 fn timing_reports_every_method() {
-    let output = mjk(&["validate", "--timing"]).expect("the mjk binary runs");
+    let output = mjk(&["validate", "integrators", "--timing"]).expect("the mjk binary runs");
     assert!(output.status.success());
     let text = String::from_utf8_lossy(&output.stdout);
     for name in ["RK4, not renormalized", "RK4, renormalized", "RKMK4"] {

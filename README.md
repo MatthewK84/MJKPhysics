@@ -39,8 +39,8 @@ fixed-wing aircraft.
 > the engineering book, and the error and configuration model.
 > [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
 > frame-typed math, the SO(3) maps, the rigid-body equations of motion, the integrators
-> (including the Lie-group method) and the fixed-step world loop are done, and determinism and
-> replay are next.
+> (including the Lie-group method), the fixed-step world loop, and determinism and replay are
+> done, and gravity and the standard atmosphere are next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.
@@ -206,7 +206,8 @@ Arrows point from a crate to the crates that build on it. The layering is enforc
 - **Fixed-step core:** physics runs at a fixed 1 kHz with subsystems (control, sensors) at integer
   divisors. Real-time front ends use an accumulator and interpolate between states for display.
 - **Determinism:** transcendental functions go through `libm`, random streams are seeded per
-  subsystem, and state hashes are compared between native and WebAssembly builds in CI.
+  subsystem, and CI requires a WebAssembly build to print the same state hashes as the native
+  build, byte for byte ([Determinism and replay](https://matthewk84.github.io/MJKPhysics/determinism.html)).
 - **In the browser:** the engine runs in a Web Worker and hands snapshots to the renderer as
   transferable buffers, so the demo can be hosted on GitHub Pages without cross-origin isolation.
 

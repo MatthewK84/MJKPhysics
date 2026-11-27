@@ -41,7 +41,7 @@ struct QuarticForce;
 impl LoadModel for QuarticForce {
     fn loads(&self, time_s: f64, _: &RigidBodyState, props: &MassProperties) -> Loads {
         Loads {
-            force_w: Vec3::new(0.0, 0.0, props.mass_kg() * 4.0 * time_s.powi(3)),
+            force_w: Vec3::new(0.0, 0.0, props.mass_kg() * 4.0 * libm::pow(time_s, 3.0)),
             moment_b: Vec3::zero(),
         }
     }
@@ -178,13 +178,13 @@ fn fitted_order(steps: &[f64], errors: &[f64]) -> f64 {
     let points: Vec<(f64, f64)> = steps
         .iter()
         .zip(errors)
-        .map(|(h, e)| (h.ln(), e.ln()))
+        .map(|(h, e)| (libm::log(*h), libm::log(*e)))
         .collect();
     let count = f64::from(u32::try_from(points.len()).unwrap_or(u32::MAX));
     let mean_x = points.iter().map(|p| p.0).sum::<f64>() / count;
     let mean_y = points.iter().map(|p| p.1).sum::<f64>() / count;
     let covariance: f64 = points.iter().map(|p| (p.0 - mean_x) * (p.1 - mean_y)).sum();
-    let variance: f64 = points.iter().map(|p| (p.0 - mean_x).powi(2)).sum();
+    let variance: f64 = points.iter().map(|p| (p.0 - mean_x) * (p.0 - mean_x)).sum();
     covariance / variance
 }
 
@@ -194,8 +194,8 @@ fn oscillator_errors<I: Integrator<RigidBodySystem<Spring>>>(
     step_counts: &[u32],
 ) -> Option<Vec<f64>> {
     let (system, y0) = oscillator()?;
-    let exact_x = Vec3::new(10.0_f64.cos(), 0.0, 0.0);
-    let exact_v = Vec3::new(-(10.0_f64.sin()), 0.0, 0.0);
+    let exact_x = Vec3::new(libm::cos(10.0), 0.0, 0.0);
+    let exact_v = Vec3::new(-libm::sin(10.0), 0.0, 0.0);
     let errors = step_counts.iter().map(|&n| {
         let y = run(method, &system, y0, 10.0 / f64::from(n), n);
         (y.position - exact_x).norm() + (y.velocity - exact_v).norm()
@@ -344,7 +344,7 @@ fn explicit_euler_gains_energy_on_an_oscillator() {
     let (system, y0) = oscillator().expect("physical");
     let y = run(&ExplicitEuler, &system, y0, 0.01, 100_000);
     let growth = energy(&y) / energy(&y0);
-    let expected = 1.0001_f64.powi(100_000);
+    let expected = libm::pow(1.0001, 100_000.0);
     assert!(growth > 20_000.0);
     assert!(
         (growth / expected - 1.0).abs() < 1e-8,

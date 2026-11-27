@@ -60,7 +60,7 @@ fn horner(coefficients: &[f64], x: f64) -> f64 {
     coefficients
         .iter()
         .rev()
-        .fold(0.0, |acc, c| acc.mul_add(x, *c))
+        .fold(0.0, |acc, c| libm::fma(acc, x, *c))
 }
 
 /// `sin(θ/2)/θ`, with its Taylor series near zero, Eq. (SO3-3).

@@ -195,7 +195,7 @@ mod tests {
     /// `R · diag · Rᵀ` for a rotation by `angle` about the unit `axis`, with `R` from
     /// Rodrigues' formula `R = c·I + s·[u]× + (1 − c)·u·uᵀ`.
     fn rotated_by(principal: [[f64; 3]; 3], angle: f64, axis: (f64, f64, f64)) -> [[f64; 3]; 3] {
-        let (s, c) = angle.sin_cos();
+        let (s, c) = (libm::sin(angle), libm::cos(angle));
         let (ux, uy, uz) = axis;
         let t = 1.0 - c;
         let rot = [

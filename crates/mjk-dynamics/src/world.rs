@@ -11,8 +11,11 @@
 //!
 //! A step allocates nothing.
 
+use mjk_math::{StateHash, StateHasher};
+
 use crate::clock::{Clock, RateError};
 use crate::integrator::{Integrator, System};
+use crate::replay::{Checkpoints, InputLog, InputModel, RecordError, Replay};
 
 /// The coordinates of a model's continuous dynamics.
 pub type ModelCoordinates<M> = <<M as Model>::System as System>::Coordinates;
@@ -164,5 +167,66 @@ impl<M: Model, I: Integrator<M::System>> World<M, I> {
     /// The model, for changing inputs between steps, such as pilot commands.
     pub const fn model_mut(&mut self) -> &mut M {
         &mut self.model
+    }
+}
+
+impl<M, I> World<M, I>
+where
+    M: Model + StateHash,
+    ModelCoordinates<M>: StateHash,
+    I: Integrator<M::System>,
+{
+    /// The fingerprint of everything that determines the steps to come: the clock, the current
+    /// state, and the model's own state (held inputs, sensor buffers, random streams). The
+    /// previous state and the real-time remainder only affect drawing, so they are left out.
+    #[must_use]
+    pub fn state_hash(&self) -> u64 {
+        let mut hasher = StateHasher::new();
+        self.clock.hash_state(&mut hasher);
+        self.current.hash_state(&mut hasher);
+        self.model.hash_state(&mut hasher);
+        hasher.finish()
+    }
+
+    /// Records the state hash in `checkpoints` if one is due on this tick, and says whether it
+    /// was.
+    ///
+    /// # Errors
+    ///
+    /// A [`RecordError`] when `checkpoints` is full or already holds this tick.
+    pub fn checkpoint(&self, checkpoints: &mut Checkpoints) -> Result<bool, RecordError> {
+        if !checkpoints.is_due(self.clock.tick()) {
+            return Ok(false);
+        }
+        checkpoints.record(self.clock.tick(), self.state_hash())?;
+        Ok(true)
+    }
+}
+
+impl<M: InputModel, I: Integrator<M::System>> World<M, I> {
+    /// Applies `input` before the next step and records it in `log` at the current tick. An
+    /// input that cannot be recorded is not applied, so the log always replays the run.
+    ///
+    /// # Errors
+    ///
+    /// A [`RecordError`] when `log` is full.
+    pub fn apply(
+        &mut self,
+        input: M::Input,
+        log: &mut InputLog<M::Input>,
+    ) -> Result<(), RecordError> {
+        log.record(self.clock.tick(), input)?;
+        self.model.apply(&input);
+        Ok(())
+    }
+
+    /// Applies, in recorded order, every input in `replay` due by the current tick, and returns
+    /// how many. Called before every step, it reproduces the recorded run.
+    pub fn replay_due(&mut self, replay: &mut Replay<'_, M::Input>) -> usize {
+        let due = replay.due(self.clock.tick());
+        for event in due {
+            self.model.apply(&event.input);
+        }
+        due.len()
     }
 }

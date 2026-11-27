@@ -30,7 +30,8 @@ fn direction() -> impl Strategy<Value = Vec3<Body>> {
 
 /// Rotation vectors with magnitude log-uniform in [1e-12, max].
 fn rotation_vector(max_angle: f64) -> impl Strategy<Value = Vec3<Body>> {
-    (direction(), -12.0..max_angle.log10()).prop_map(|(axis, exponent)| axis * 10f64.powf(exponent))
+    (direction(), -12.0..libm::log10(max_angle))
+        .prop_map(|(axis, exponent)| axis * libm::pow(10.0, exponent))
 }
 
 fn identity_error(m: Mat3<Body>) -> f64 {
@@ -120,7 +121,7 @@ proptest! {
         sign in prop::bool::ANY,
         closeness in prop::option::of(0.0..15.0_f64),
     ) {
-        let offset = closeness.map_or(0.0, |k| 10f64.powf(-k));
+        let offset = closeness.map_or(0.0, |k| libm::pow(10.0, -k));
         let pitch = if sign { FRAC_PI_2 - offset } else { offset - FRAC_PI_2 };
         let angles = EulerAngles { yaw_rad: yaw, pitch_rad: pitch, roll_rad: roll };
         let original = Rotation::<World, Body>::from_euler(angles);
@@ -130,9 +131,9 @@ proptest! {
 
     #[test]
     fn euler_matches_the_matrix_product(yaw in -PI..PI, pitch in -FRAC_PI_2..FRAC_PI_2, roll in -PI..PI) {
-        let (sy, cy) = yaw.sin_cos();
-        let (sp, cp) = pitch.sin_cos();
-        let (sr, cr) = roll.sin_cos();
+        let (sy, cy) = (libm::sin(yaw), libm::cos(yaw));
+        let (sp, cp) = (libm::sin(pitch), libm::cos(pitch));
+        let (sr, cr) = (libm::sin(roll), libm::cos(roll));
         let rz = Mat3::<Body>::from_rows([[cy, -sy, 0.0], [sy, cy, 0.0], [0.0, 0.0, 1.0]]);
         let ry = Mat3::<Body>::from_rows([[cp, 0.0, sp], [0.0, 1.0, 0.0], [-sp, 0.0, cp]]);
         let rx = Mat3::<Body>::from_rows([[1.0, 0.0, 0.0], [0.0, cr, -sr], [0.0, sr, cr]]);
@@ -172,7 +173,7 @@ fn exp_is_accurate_to_an_ulp_just_below_the_series_switch() {
     // θ = 2⁻¹⁰ < 1e-3 uses the series for sin(θ/2)/θ, so x = sin(2⁻¹¹) exactly up to rounding.
     // Reference: sin(2⁻¹¹) from its Taylor series in exact rational arithmetic.
     const SIN_2_POW_MINUS_11: f64 = 4.882_812_305_974_466e-4;
-    let x = UnitQuat::exp([2.0_f64.powi(-10), 0.0, 0.0]).quat().x;
+    let x = UnitQuat::exp([libm::ldexp(1.0, -10), 0.0, 0.0]).quat().x;
     let error = (x - SIN_2_POW_MINUS_11).abs() / SIN_2_POW_MINUS_11;
     assert!(error <= 2.0 * f64::EPSILON, "relative error {error:e}");
 }
@@ -181,8 +182,8 @@ fn exp_is_accurate_to_an_ulp_just_below_the_series_switch() {
 fn log_is_accurate_to_a_few_ulps_in_the_small_norm_branch() {
     // |v| = 2⁻²⁰ gives a vector part of norm 2⁻²¹ < 1e-6, where log uses its series.
     for v in [
-        [2.0_f64.powi(-20), 0.0, 0.0],
-        [0.0, -(2.0_f64.powi(-20)), 0.0],
+        [libm::ldexp(1.0, -20), 0.0, 0.0],
+        [0.0, -libm::ldexp(1.0, -20), 0.0],
         [3e-7, 4e-7, -5e-7],
     ] {
         let back = UnitQuat::exp(v).log();

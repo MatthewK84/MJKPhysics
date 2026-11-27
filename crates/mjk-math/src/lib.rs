@@ -16,12 +16,17 @@
 //! Arithmetic and `sqrt` are rounded exactly by IEEE 754, and every transcendental function
 //! (`sin`, `cos`, `atan2`) goes through `libm`, so results are bit-identical on every platform.
 //! The SO(3) maps are in [`so3`]; Euler angles, for input and output only, are [`EulerAngles`].
+//!
+//! For reproducible runs, [`Xoshiro256StarStar`] gives seeded random numbers in named streams, and
+//! [`StateHasher`] fingerprints a state's exact bits.
 
 mod eigen;
 mod euler;
 mod frame;
+mod hash;
 mod mat3;
 mod quat;
+mod random;
 mod rotation;
 pub mod so3;
 mod vec3;
@@ -29,7 +34,9 @@ mod vec3;
 pub use eigen::{JACOBI_TOLERANCE, MAX_JACOBI_SWEEPS, SymmetricEigen};
 pub use euler::{EulerAngles, GIMBAL_LOCK_COS};
 pub use frame::{Body, Frame, Part, Stability, Wind, World};
+pub use hash::{StateHash, StateHasher, state_hash};
 pub use mat3::Mat3;
 pub use quat::{Quat, UnitQuat};
+pub use random::{SplitMix64, Xoshiro256StarStar};
 pub use rotation::Rotation;
 pub use vec3::Vec3;

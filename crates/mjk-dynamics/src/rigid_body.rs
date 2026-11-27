@@ -1,6 +1,6 @@
 //! The rigid-body state and the Newton–Euler equations of motion, Eqs. (RB-1) and (RB-2).
 
-use mjk_math::{Body, Rotation, Vec3, World};
+use mjk_math::{Body, Rotation, StateHash, StateHasher, Vec3, World};
 
 use crate::mass::MassProperties;
 
@@ -16,6 +16,15 @@ pub struct RigidBodyState {
     pub q_wb: Rotation<World, Body>,
     /// Angular velocity of the body relative to the world, body axes: (p, q, r).
     pub omega_rad_s: Vec3<Body>,
+}
+
+impl StateHash for RigidBodyState {
+    fn hash_state(&self, hasher: &mut StateHasher) {
+        self.position_m.hash_state(hasher);
+        self.velocity_m_s.hash_state(hasher);
+        self.q_wb.hash_state(hasher);
+        self.omega_rad_s.hash_state(hasher);
+    }
 }
 
 impl RigidBodyState {

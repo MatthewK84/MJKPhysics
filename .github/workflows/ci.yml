@@ -227,6 +227,42 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "mjk_wasm.wasm: ${raw} bytes raw, ${gz} bytes gzip -9"
 
+  wasm-agrees:
+    name: Native and WebAssembly agree
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned toolchain (rust-toolchain.toml), with wasm32-wasip1
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Build `mjk` natively and for WASI
+        run: |
+          cargo build -p mjk-cli --release --locked
+          cargo build -p mjk-cli --release --locked --target wasm32-wasip1
+      - name: Each study's output is identical natively, in WebAssembly and in the book (#14)
+        run: |
+          wasm=target/wasm32-wasip1/release/mjk.wasm
+          status=0
+          for pair in integrators:integrator-study determinism:determinism; do
+            study=${pair%%:*}
+            table="docs/src/validation/${pair#*:}.md"
+            target/release/mjk validate "$study" > "$RUNNER_TEMP/$study-native.md"
+            node --disable-warning=ExperimentalWarning viewer/scripts/run-wasi.mjs "$wasm" \
+              validate "$study" > "$RUNNER_TEMP/$study-wasm.md"
+            if diff -u "$RUNNER_TEMP/$study-native.md" "$RUNNER_TEMP/$study-wasm.md" \
+              && diff -u "$table" "$RUNNER_TEMP/$study-native.md"; then
+              echo "$study: native and WebAssembly output match $table byte for byte"
+            else
+              status=1
+            fi
+          done
+          exit "$status"
+
   viewer:
     name: Viewer
     runs-on: ubuntu-24.04

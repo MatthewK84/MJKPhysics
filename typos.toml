@@ -5,8 +5,9 @@
 [default]
 locale = "en-us"
 # Text between these markers is not checked, for example the table of British spellings to
-# avoid in CLAUDE.md.
-extend-ignore-re = ["(?s)typos: off.*?typos: on"]
+# avoid in CLAUDE.md. Nor are 64-bit hashes written as 16 hexadecimal digits, such as the
+# determinism study's checkpoint hashes.
+extend-ignore-re = ["(?s)typos: off.*?typos: on", "\\b[0-9a-f]{16}\\b"]
 
 [default.extend-words]
 # North-East-Down, the world frame.
