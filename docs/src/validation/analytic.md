@@ -31,4 +31,4 @@ Why each tolerance:
 - **7.** RK4-type phase error, N·(h·ω)⁵/120 with ω = 12.04 rad/s, plus rounding: 2.2e-8 rad.
 - **8.** Near the separatrix (k′² = 5.6e-4) an invariant error δ moves the interval by about δ/(2K·k′²) = 175δ; with δ = 1.3e-10, 2.4e-8.
 - **9–10.** RK4-type truncation N·(h·ω)⁵/120 plus rounding N·ε, with ω = 3.00 rad/s: 1.3e-10.
-- **11–18.** Slope of ln(error) against ln(h) over h = 1/16 to 1/128 s. At the largest step h·ω = 0.11 and h/τ = 0.0625: the next term of the error expansion shifts the slope by about that much, and ±0.2 is about twice it.
+- **11–18.** Slope of ln(error) against ln(h) over h = 1/16 to 1/128 s, for 2 kg with drag 2 N·s/m (τ = 1 s) launched at (2, 0, -1) m/s, and for a body with transverse and axial moments 0.02 and 0.035 kg·m² spinning at (0.3, 0, 1) rad/s. At the largest step h·ω = 0.11 and h/τ = 0.0625: the next term of the error expansion shifts the slope by about that much, and ±0.2 is about twice it.

@@ -467,3 +467,23 @@ impl Flips {
         (self.last_s - first) / count(self.count.saturating_sub(1))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Flips, STEP_S};
+
+    #[test]
+    fn a_sample_exactly_at_zero_is_one_flip_at_that_time() {
+        // −1, 0, +1: one sign change, at the zero sample, neither missed nor counted twice.
+        let mut flips = Flips::default();
+        flips.observe(STEP_S, -1.0, 0.0);
+        flips.observe(2.0 * STEP_S, 0.0, 1.0);
+        assert_eq!(flips.count, 1);
+        assert!(flips.mean_interval_s().is_nan(), "one flip has no interval");
+        assert!((flips.first_s.unwrap_or(f64::NAN) - STEP_S).abs() < 1e-18);
+        // +1 to −1 crosses halfway between the samples.
+        flips.observe(10.0 * STEP_S, 1.0, -1.0);
+        assert_eq!(flips.count, 2);
+        assert!((flips.mean_interval_s() - 8.5 * STEP_S).abs() < 1e-15);
+    }
+}

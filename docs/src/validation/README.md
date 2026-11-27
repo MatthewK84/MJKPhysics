@@ -114,7 +114,7 @@ e \approx C\,h^{p}
 | Linear drag | 2 kg, $`c`$ = 0.5 N·s/m ($`\tau`$ = 4 s) | $`\mathbf{v}_0`$ = (20, 0, −15) m/s | 5 s |
 | Axisymmetric body | $`I_t`$ = 0.02, $`I_a`$ = 0.035 kg·m² | $`\boldsymbol\omega`$ = (1, 0, 12) rad/s | 10 s |
 | Intermediate axis | $`I`$ = (0.010, 0.020, 0.030) kg·m² | $`\boldsymbol\omega`$ = (0.05, 3, 0.05) rad/s; $`k'^2 = 5.6\times10^{-4}`$ | 60 s |
-| Order, translation | 1 kg, $`\tau`$ = 1 s | $`\mathbf{v}_0`$ = (2, 0, −1) m/s | 4 s |
+| Order, translation | 2 kg, $`c`$ = 2 N·s/m ($`\tau`$ = 1 s) | $`\mathbf{v}_0`$ = (2, 0, −1) m/s | 4 s |
 | Order, rotation | $`I_t`$ = 0.02, $`I_a`$ = 0.035 kg·m² | $`\boldsymbol\omega`$ = (0.3, 0, 1) rad/s | 4 s |
 
 ### Results
