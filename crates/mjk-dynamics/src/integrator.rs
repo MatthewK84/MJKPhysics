@@ -1,9 +1,11 @@
-//! Fixed-step integrators, Eqs. (INT-1) to (INT-3); see ADR 0002.
+//! Fixed-step integrators, Eqs. (INT-1) to (INT-3) and (INT-7); see ADR 0002.
 //!
-//! An integrator advances any [`System`] of ordinary differential equations by one step. Systems
+//! An integrator advances a [`System`] of ordinary differential equations by one step. Systems
 //! work in [`Coordinates`]: a vector space, so stages can be added and scaled, split into
-//! position-like and velocity-like parts for semi-implicit Euler. The rigid body is one system;
-//! motor and battery states join it in later milestones without changing the integrators.
+//! position-like and velocity-like parts for semi-implicit Euler. A [`LieSystem`] also offers a
+//! chart in which part of its state lives on a Lie group, which the Runge–Kutta–Munthe-Kaas
+//! method ([`Rkmk4`]) steps in. The rigid body is one system; motor and battery states join it in
+//! later milestones without changing the integrators.
 
 use std::ops::{Add, Mul};
 
@@ -34,30 +36,43 @@ pub trait System {
     fn rate(&self, time_s: f64, y: &Self::Coordinates) -> Self::Coordinates;
 }
 
-/// A method that advances a [`System`] by one fixed step.
-pub trait Integrator {
-    /// The coordinates at `time_s + dt_s`, starting from `y` at `time_s`.
-    fn step<S: System>(
+/// A system whose state is partly on a Lie group, with a chart around any base point.
+///
+/// Near a base point `y₀`, the state is `retract(y₀, u)` for a tangent vector `u`: group-valued
+/// parts move by the exponential map, the others by addition. In the chart the equations of
+/// motion become an ordinary differential equation for `u` in a vector space, Eq. (INT-6).
+pub trait LieSystem: System {
+    /// Tangent coordinates of the chart. The default value is the zero vector, which maps to the
+    /// base point itself.
+    type Tangent: Coordinates + Default;
+
+    /// The state reached from `base` by the tangent vector `u`.
+    fn retract(&self, base: &Self::Coordinates, u: &Self::Tangent) -> Self::Coordinates;
+
+    /// The rate of the chart coordinates, u̇, at the state `retract(base, u)` and time `time_s`.
+    fn tangent_rate(
         &self,
-        system: &S,
         time_s: f64,
-        y: &S::Coordinates,
-        dt_s: f64,
-    ) -> S::Coordinates;
+        base: &Self::Coordinates,
+        u: &Self::Tangent,
+    ) -> Self::Tangent;
+}
+
+/// A method that advances a system of type `S` by one fixed step.
+///
+/// Every method implements this one trait (ADR 0002), so methods can be swapped and compared;
+/// [`Rkmk4`] implements it for systems that offer a Lie-group chart.
+pub trait Integrator<S: System> {
+    /// The coordinates at `time_s + dt_s`, starting from `y` at `time_s`.
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates;
 }
 
 /// Explicit (forward) Euler, Eq. (INT-1). First order; a reference method only.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ExplicitEuler;
 
-impl Integrator for ExplicitEuler {
-    fn step<S: System>(
-        &self,
-        system: &S,
-        time_s: f64,
-        y: &S::Coordinates,
-        dt_s: f64,
-    ) -> S::Coordinates {
+impl<S: System> Integrator<S> for ExplicitEuler {
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates {
         // Eq. (INT-1)
         (*y + system.rate(time_s, y) * dt_s).project()
     }
@@ -68,14 +83,8 @@ impl Integrator for ExplicitEuler {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SemiImplicitEuler;
 
-impl Integrator for SemiImplicitEuler {
-    fn step<S: System>(
-        &self,
-        system: &S,
-        time_s: f64,
-        y: &S::Coordinates,
-        dt_s: f64,
-    ) -> S::Coordinates {
+impl<S: System> Integrator<S> for SemiImplicitEuler {
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates {
         // Eq. (INT-2)
         let kicked = *y + system.rate(time_s, y).velocities() * dt_s;
         (kicked + system.rate(time_s, &kicked).positions() * dt_s).project()
@@ -86,14 +95,8 @@ impl Integrator for SemiImplicitEuler {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Rk4;
 
-impl Integrator for Rk4 {
-    fn step<S: System>(
-        &self,
-        system: &S,
-        time_s: f64,
-        y: &S::Coordinates,
-        dt_s: f64,
-    ) -> S::Coordinates {
+impl<S: System> Integrator<S> for Rk4 {
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates {
         // Eq. (INT-3)
         let half = 0.5 * dt_s;
         let k1 = system.rate(time_s, y);
@@ -101,5 +104,24 @@ impl Integrator for Rk4 {
         let k3 = system.rate(time_s + half, &(*y + k2 * half));
         let k4 = system.rate(time_s + dt_s, &(*y + k3 * dt_s));
         (*y + (k1 + (k2 + k3) * 2.0 + k4) * (dt_s / 6.0)).project()
+    }
+}
+
+/// The Runge–Kutta–Munthe-Kaas method of order four, Eq. (INT-7): classical RK4 applied to the
+/// chart coordinates around the state at the start of the step, then mapped back with the
+/// exponential map. The group-valued part never leaves the group, so nothing is renormalized.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Rkmk4;
+
+impl<S: LieSystem> Integrator<S> for Rkmk4 {
+    fn step(&self, system: &S, time_s: f64, y: &S::Coordinates, dt_s: f64) -> S::Coordinates {
+        // Eq. (INT-7)
+        let half = 0.5 * dt_s;
+        let k1 = system.tangent_rate(time_s, y, &S::Tangent::default());
+        let k2 = system.tangent_rate(time_s + half, y, &(k1 * half));
+        let k3 = system.tangent_rate(time_s + half, y, &(k2 * half));
+        let k4 = system.tangent_rate(time_s + dt_s, y, &(k3 * dt_s));
+        let u = (k1 + (k2 + k3) * 2.0 + k4) * (dt_s / 6.0);
+        system.retract(y, &u)
     }
 }

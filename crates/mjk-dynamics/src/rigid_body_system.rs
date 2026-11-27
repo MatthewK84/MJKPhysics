@@ -1,12 +1,14 @@
-//! The rigid body as a [`System`] that integrators can advance, Eq. (INT-4).
+//! The rigid body as a [`System`] that integrators can advance, Eq. (INT-4), and as a
+//! [`LieSystem`] with an exponential chart for its attitude, Eq. (INT-6).
 
 use std::ops::{Add, Mul};
 
+use mjk_math::so3::right_jacobian_inverse;
 use mjk_math::{Body, Quat, Rotation, UnitQuat, Vec3, World};
 
-use crate::integrator::{Coordinates, System};
+use crate::integrator::{Coordinates, LieSystem, System};
 use crate::mass::MassProperties;
-use crate::rigid_body::{RigidBodyState, derivative};
+use crate::rigid_body::{RigidBodyState, StateDerivative, derivative};
 
 /// Rigid-body coordinates as integrators see them: the [`RigidBodyState`] with the attitude as
 /// four raw quaternion components.
@@ -133,23 +135,130 @@ pub struct RigidBodySystem<L: LoadModel> {
     pub loads: L,
 }
 
+impl<L: LoadModel> RigidBodySystem<L> {
+    /// The Newton–Euler rates at coordinates `y`. The physics sees the normalized attitude: a
+    /// non-unit stage quaternion would scale every rotated vector by |q|². `None` when the
+    /// attitude is zero or not finite.
+    fn rates_at(&self, time_s: f64, y: &RigidBodyCoordinates) -> Option<StateDerivative> {
+        let state = y.to_state()?;
+        let loads = self.loads.loads(time_s, &state, &self.props);
+        Some(derivative(
+            &state,
+            &self.props,
+            loads.force_w,
+            loads.moment_b,
+        ))
+    }
+}
+
 impl<L: LoadModel> System for RigidBodySystem<L> {
     type Coordinates = RigidBodyCoordinates;
 
     fn rate(&self, time_s: f64, y: &RigidBodyCoordinates) -> RigidBodyCoordinates {
-        // The physics sees the normalized attitude; a non-unit stage quaternion would scale
-        // every rotated vector by |q|².
-        let Some(state) = y.to_state() else {
+        let Some(rates) = self.rates_at(time_s, y) else {
             return *y * f64::NAN;
         };
-        let loads = self.loads.loads(time_s, &state, &self.props);
-        let rates = derivative(&state, &self.props, loads.force_w, loads.moment_b);
         // Eq. (INT-4): q̇ = ½ q ⊗ (0, ω), with the raw stage quaternion.
         let omega = Quat::pure(rates.omega_rad_s.to_array());
         RigidBodyCoordinates {
             position: rates.velocity_m_s,
             velocity: rates.acceleration_m_s2,
             attitude: y.attitude * omega * 0.5,
+            angular_velocity: rates.angular_acceleration_rad_s2,
+        }
+    }
+}
+
+/// Tangent coordinates of the rigid body's chart around a base state, Eq. (INT-6): changes of
+/// position, velocity and angular velocity, and a rotation vector θ applied on the right of the
+/// base attitude, in body axes (CONV-10). The same type holds their rate of change.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct RigidBodyTangent {
+    /// Change of position, world axes; as a rate, the velocity.
+    pub position: Vec3<World>,
+    /// Change of velocity, world axes; as a rate, the acceleration.
+    pub velocity: Vec3<World>,
+    /// Rotation vector θ from the base attitude, body axes; as a rate, θ̇.
+    pub rotation: Vec3<Body>,
+    /// Change of angular velocity, body axes; as a rate, the angular acceleration.
+    pub angular_velocity: Vec3<Body>,
+}
+
+impl Add for RigidBodyTangent {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            position: self.position + rhs.position,
+            velocity: self.velocity + rhs.velocity,
+            rotation: self.rotation + rhs.rotation,
+            angular_velocity: self.angular_velocity + rhs.angular_velocity,
+        }
+    }
+}
+
+impl Mul<f64> for RigidBodyTangent {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self {
+        Self {
+            position: self.position * rhs,
+            velocity: self.velocity * rhs,
+            rotation: self.rotation * rhs,
+            angular_velocity: self.angular_velocity * rhs,
+        }
+    }
+}
+
+impl Coordinates for RigidBodyTangent {
+    fn positions(self) -> Self {
+        Self {
+            velocity: Vec3::zero(),
+            angular_velocity: Vec3::zero(),
+            ..self
+        }
+    }
+
+    fn velocities(self) -> Self {
+        Self {
+            position: Vec3::zero(),
+            rotation: Vec3::zero(),
+            ..self
+        }
+    }
+
+    /// Tangent vectors live in a vector space with no constraint to restore.
+    fn project(self) -> Self {
+        self
+    }
+}
+
+impl<L: LoadModel> LieSystem for RigidBodySystem<L> {
+    type Tangent = RigidBodyTangent;
+
+    fn retract(&self, base: &RigidBodyCoordinates, u: &RigidBodyTangent) -> RigidBodyCoordinates {
+        // Eq. (INT-6): q = q₀ ⊗ Exp(θ), increments on the right (CONV-10).
+        let turn = UnitQuat::exp(u.rotation.to_array()).quat();
+        RigidBodyCoordinates {
+            position: base.position + u.position,
+            velocity: base.velocity + u.velocity,
+            attitude: base.attitude * turn,
+            angular_velocity: base.angular_velocity + u.angular_velocity,
+        }
+    }
+
+    fn tangent_rate(
+        &self,
+        time_s: f64,
+        base: &RigidBodyCoordinates,
+        u: &RigidBodyTangent,
+    ) -> RigidBodyTangent {
+        let Some(rates) = self.rates_at(time_s, &self.retract(base, u)) else {
+            return *u * f64::NAN;
+        };
+        RigidBodyTangent {
+            position: rates.velocity_m_s,
+            velocity: rates.acceleration_m_s2,
+            // Eq. (INT-6): θ̇ = J_r⁻¹(θ)·ω, Eq. (SO3-5).
+            rotation: right_jacobian_inverse(u.rotation) * rates.omega_rad_s,
             angular_velocity: rates.angular_acceleration_rad_s2,
         }
     }

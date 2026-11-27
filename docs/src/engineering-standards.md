@@ -119,7 +119,7 @@ it, or drops a power of it, is caught. After these and the other new tests
 Some mutants compute the same result as the original for every input. For example, `<` becomes
 `<=` at the switch point between a series and its closed form, where both are exact to rounding.
 These are excluded by name in `.cargo/mutants.toml`, each with a comment saying why no test can
-tell the two versions apart. Eleven mutants are excluded this way.
+tell the two versions apart. The list is kept short, and every entry carries its reason.
 
 An exclusion can also expose code that does nothing measurable. Two mutants of the small-angle
 logarithm survived because they replaced $`q_0^2`$ by 1 in the series

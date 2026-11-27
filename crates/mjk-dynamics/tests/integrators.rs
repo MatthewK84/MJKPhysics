@@ -5,8 +5,8 @@ use std::ops::{Add, Mul};
 
 use mjk_dynamics::mass::MassProperties;
 use mjk_dynamics::{
-    Coordinates, ExplicitEuler, Integrator, LoadModel, Loads, RigidBodyCoordinates, RigidBodyState,
-    RigidBodySystem, Rk4, SemiImplicitEuler, System,
+    Coordinates, ExplicitEuler, Integrator, LieSystem, LoadModel, Loads, RigidBodyCoordinates,
+    RigidBodyState, RigidBodySystem, RigidBodyTangent, Rk4, Rkmk4, SemiImplicitEuler, System,
 };
 use mjk_math::{Body, Mat3, Quat, Rotation, UnitQuat, Vec3, World};
 
@@ -28,6 +28,19 @@ impl LoadModel for ConstantForce {
     fn loads(&self, _: f64, _: &RigidBodyState, _: &MassProperties) -> Loads {
         Loads {
             force_w: self.0,
+            moment_b: Vec3::zero(),
+        }
+    }
+}
+
+/// A force growing with time, chosen so the vertical velocity is t⁴: F = m·4t³ along z.
+#[derive(Clone, Copy, Debug)]
+struct QuarticForce;
+
+impl LoadModel for QuarticForce {
+    fn loads(&self, time_s: f64, _: &RigidBodyState, props: &MassProperties) -> Loads {
+        Loads {
+            force_w: Vec3::new(0.0, 0.0, props.mass_kg() * 4.0 * time_s.powi(3)),
             moment_b: Vec3::zero(),
         }
     }
@@ -63,7 +76,7 @@ fn start(velocity: Vec3<World>, omega: Vec3<Body>) -> RigidBodyCoordinates {
     RigidBodyCoordinates::from(state)
 }
 
-fn run<I: Integrator, S: System>(
+fn run<S: System, I: Integrator<S>>(
     method: &I,
     system: &S,
     y0: S::Coordinates,
@@ -81,17 +94,18 @@ fn run<I: Integrator, S: System>(
 fn each_method_has_its_own_closed_form_under_constant_acceleration() {
     // a = F/m = 10 m/s² along z, v₀ = 1 m/s along x, h = 1/8 s, n = 8 steps (t = 1 s).
     // Explicit Euler: z = h²·a·n(n−1)/2 = 4.375; semi-implicit: h²·a·n(n+1)/2 = 5.625;
-    // RK4 is exact for a quadratic: ½·a·t² = 5. All three move x by v₀·t = 1.
+    // RK4 and RKMK4 are exact for a quadratic: ½·a·t² = 5. All move x by v₀·t = 1.
     let props = body(2.0, diagonal([0.02, 0.03, 0.04])).expect("physical");
     let system = RigidBodySystem {
         props,
         loads: ConstantForce(Vec3::new(0.0, 0.0, 20.0)),
     };
     let y0 = start(Vec3::new(1.0, 0.0, 0.0), Vec3::zero());
-    let cases: [(f64, RigidBodyCoordinates); 3] = [
+    let cases: [(f64, RigidBodyCoordinates); 4] = [
         (4.375, run(&ExplicitEuler, &system, y0, 0.125, 8)),
         (5.625, run(&SemiImplicitEuler, &system, y0, 0.125, 8)),
         (5.0, run(&Rk4, &system, y0, 0.125, 8)),
+        (5.0, run(&Rkmk4, &system, y0, 0.125, 8)),
     ];
     for (z_m, y) in cases {
         assert!(
@@ -174,7 +188,10 @@ fn fitted_order(steps: &[f64], errors: &[f64]) -> f64 {
 }
 
 /// Errors of a method at T = 10 s on x″ = −x, x(0) = 1, against x = cos t, v = −sin t.
-fn oscillator_errors<I: Integrator>(method: &I, step_counts: &[u32]) -> Option<Vec<f64>> {
+fn oscillator_errors<I: Integrator<RigidBodySystem<Spring>>>(
+    method: &I,
+    step_counts: &[u32],
+) -> Option<Vec<f64>> {
     let (system, y0) = oscillator()?;
     let exact_x = Vec3::new(10.0_f64.cos(), 0.0, 0.0);
     let exact_v = Vec3::new(-(10.0_f64.sin()), 0.0, 0.0);
@@ -208,6 +225,13 @@ fn measured_order_on_an_oscillator() {
             fitted_order(&steps, &oscillator_errors(&Rk4, &counts).expect("physical")),
             4.0,
         ),
+        (
+            fitted_order(
+                &steps,
+                &oscillator_errors(&Rkmk4, &counts).expect("physical"),
+            ),
+            4.0,
+        ),
     ];
     for (measured, order) in expected {
         assert!(
@@ -227,7 +251,10 @@ fn tumbling_body() -> Option<RigidBodySystem<NoLoads>> {
 }
 
 /// Attitude angle plus angular-velocity error at T = 2 s against an RK4 run with h = 1/3200 s.
-fn tumbling_errors<I: Integrator>(method: &I, step_counts: &[u32]) -> Option<Vec<f64>> {
+fn tumbling_errors<I: Integrator<RigidBodySystem<NoLoads>>>(
+    method: &I,
+    step_counts: &[u32],
+) -> Option<Vec<f64>> {
     let system = tumbling_body()?;
     let y0 = start(Vec3::zero(), Vec3::new(1.0, 0.5, 2.0));
     let reference = run(&Rk4, &system, y0, 2.0 / 6400.0, 6400);
@@ -263,6 +290,10 @@ fn measured_order_on_a_tumbling_body() {
         ),
         (
             fitted_order(&steps, &tumbling_errors(&Rk4, &counts).expect("physical")),
+            4.0,
+        ),
+        (
+            fitted_order(&steps, &tumbling_errors(&Rkmk4, &counts).expect("physical")),
             4.0,
         ),
     ];
@@ -380,4 +411,98 @@ fn round_trip_between_state_and_coordinates() {
     assert_eq!(back.velocity_m_s, state.velocity_m_s);
     assert_eq!(back.omega_rad_s, state.omega_rad_s);
     assert!(back.q_wb.angle_to(state.q_wb) < 1e-15);
+}
+
+// ---------------------------------------------------------------- Lie-group method
+
+#[test]
+fn rkmk4_is_exact_for_steady_spin_about_a_principal_axis() {
+    // With ω along a principal axis, ω stays constant and θ ∥ ω, so J_r⁻¹(θ)·ω = ω: RKMK4
+    // reproduces q(t) = Exp(ω·t) to rounding. RK4 on the quaternion components truncates
+    // exp(½Ω·h) after its fourth power at every step.
+    let props = body(1.0, diagonal([0.02, 0.03, 0.04])).expect("physical");
+    let system = RigidBodySystem {
+        props,
+        loads: NoLoads,
+    };
+    let y0 = start(Vec3::zero(), Vec3::new(0.0, 0.0, 3.0));
+    let exact = UnitQuat::exp([0.0, 0.0, 15.0]);
+    let lie = run(&Rkmk4, &system, y0, 0.05, 100);
+    let classical = run(&Rk4, &system, y0, 0.05, 100);
+    let lie_error = UnitQuat::new(lie.attitude).expect("unit").angle_to(exact);
+    let classical_error = UnitQuat::new(classical.attitude)
+        .expect("unit")
+        .angle_to(exact);
+    assert!(lie_error < 1e-13, "RKMK4 error {lie_error:e}");
+    assert!(classical_error > 1e-9, "RK4 error {classical_error:e}");
+}
+
+#[test]
+fn rkmk4_keeps_a_unit_quaternion_without_renormalizing() {
+    // 10⁵ steps of h = 0.01 s on a tumbling body; RKMK4 never projects.
+    let system = tumbling_body().expect("physical");
+    let y0 = start(Vec3::zero(), Vec3::new(3.0, -4.0, 5.0));
+    let y = run(&Rkmk4, &system, y0, 0.01, 100_000);
+    let error = (y.attitude.norm() - 1.0).abs();
+    assert!(error < 1e-12, "unit-norm error {error:e}");
+}
+
+#[test]
+fn the_chart_is_centered_on_its_base_point() {
+    let system = tumbling_body().expect("physical");
+    let mut base = start(Vec3::new(1.0, 2.0, 3.0), Vec3::new(0.3, 0.2, 0.1));
+    base.attitude = UnitQuat::exp([0.1, -0.2, 0.3]).quat();
+    assert_eq!(system.retract(&base, &RigidBodyTangent::default()), base);
+    let u = RigidBodyTangent {
+        position: Vec3::new(1.0, -1.0, 0.5),
+        velocity: Vec3::new(0.25, 0.5, -0.75),
+        rotation: Vec3::new(0.0, 0.0, 0.5),
+        angular_velocity: Vec3::new(-0.1, 0.2, 0.3),
+    };
+    let moved = system.retract(&base, &u);
+    assert_eq!(moved.position, base.position + u.position);
+    assert_eq!(moved.velocity, base.velocity + u.velocity);
+    assert_eq!(
+        moved.angular_velocity,
+        base.angular_velocity + u.angular_velocity
+    );
+    let expected = UnitQuat::new(base.attitude * UnitQuat::exp([0.0, 0.0, 0.5]).quat());
+    let turned = UnitQuat::new(moved.attitude).expect("unit");
+    assert!(turned.angle_to(expected.expect("unit")) < 1e-15);
+    assert_eq!(u.positions() + u.velocities(), u);
+    assert_eq!(u.positions().velocity, Vec3::zero());
+    assert_eq!(u.velocities().rotation, Vec3::zero());
+    assert_eq!(u.project(), u);
+    assert_eq!(u * 2.0, u + u);
+}
+
+#[test]
+fn at_the_base_point_the_attitude_rate_is_the_angular_velocity() {
+    // J_r⁻¹(0) = I: at θ = 0 the chart rate of the attitude is ω itself.
+    let system = tumbling_body().expect("physical");
+    let base = start(Vec3::zero(), Vec3::new(0.3, -0.2, 0.1));
+    let rate = system.tangent_rate(0.0, &base, &RigidBodyTangent::default());
+    assert!((rate.rotation - base.angular_velocity).norm() < 1e-16);
+    let mut degenerate = base;
+    degenerate.attitude = Quat::new(0.0, 0.0, 0.0, 0.0);
+    let nan = system.tangent_rate(0.0, &degenerate, &RigidBodyTangent::default());
+    assert!(nan.position.x.is_nan() && nan.rotation.z.is_nan());
+}
+
+#[test]
+fn stages_are_evaluated_at_their_own_times() {
+    // v̇ = 4t³ depends on time alone, so both RK4 and RKMK4 reduce to Simpson's rule for the
+    // velocity and are exact: v_z(1) = 1. Wrong stage times break this.
+    let props = body(2.0, diagonal([0.02, 0.03, 0.04])).expect("physical");
+    let system = RigidBodySystem {
+        props,
+        loads: QuarticForce,
+    };
+    let y0 = start(Vec3::zero(), Vec3::zero());
+    for y in [
+        run(&Rk4, &system, y0, 0.25, 4),
+        run(&Rkmk4, &system, y0, 0.25, 4),
+    ] {
+        assert!((y.velocity.z - 1.0).abs() < 1e-15, "{y:?}");
+    }
 }

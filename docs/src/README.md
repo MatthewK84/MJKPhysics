@@ -9,9 +9,9 @@ every parameter, and how the implementation was checked.
 > layering, CI with the [engineering standards](engineering-standards.md) enforced, this book, and
 > the error and configuration model. Milestone M1, the math and rigid-body core, is under way:
 > [frame-typed math](math-types.md), the [SO(3) maps](so3.md) and
-> [rigid-body dynamics](models/rigid-body.md) and the fixed-step [integrators](models/integrators.md)
-> are done, and the Lie-group integrator
-> ([#12](https://github.com/MatthewK84/MJKPhysics/issues/12)) is next. The book grows with the
+> [rigid-body dynamics](models/rigid-body.md) and the [integrators](models/integrators.md),
+> including the Lie-group method, are done, and the fixed-step world loop
+> ([#13](https://github.com/MatthewK84/MJKPhysics/issues/13)) is next. The book grows with the
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 

@@ -32,6 +32,10 @@ exclude_re = [
     'mass\.rs:.*replace < with <= in check_realizable$',
     # `root()` is defined as `Self::default()`.
     'field_path\.rs:.*replace FieldPath::root -> Self with Default::default\(\)$',
+    # The integrator study's body is torque-free and autonomous: its load model returns the
+    # default (zero) loads, and the time passed to each step cannot change any result.
+    'validation/integrators\.rs:.*replace <impl LoadModel for TorqueFree>::loads -> Loads with Default::default\(\)$',
+    'validation/integrators\.rs:.*replace \* with [+/] in integrate$',
 ]
 
 # Release-like timing is unnecessary; tests are fast, so a mutant that makes one loop forever

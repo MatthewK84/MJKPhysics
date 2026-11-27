@@ -7,3 +7,4 @@
 //! ([#28](https://github.com/MatthewK84/MJKPhysics/issues/28)).
 
 pub mod config;
+pub mod validation;
