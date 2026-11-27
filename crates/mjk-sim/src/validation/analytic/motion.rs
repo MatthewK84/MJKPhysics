@@ -108,14 +108,14 @@ pub fn projectile_with_drag(method: IntegratorKind) -> Result<[Check; 2], Analyt
     let transient_m = (launch - terminal).norm() * tau_s;
     let h = STEP_S / tau_s;
     let truncation = t / tau_s * h * h * h * h / 120.0;
-    let position_estimate = truncation * transient_m + count(steps) * EPSILON * position.norm();
-    let velocity_estimate =
-        truncation * (launch - terminal).norm() + count(steps) * EPSILON * velocity.norm();
-    let rounding = count(steps) * EPSILON * position.norm();
+    // Truncation is about 10⁻⁴ of rounding here, so the tolerances come from rounding alone.
+    let position_estimate = count(steps) * EPSILON * position.norm();
+    let velocity_estimate = count(steps) * EPSILON * velocity.norm();
     let why = format!(
         "RKMK4 integrates translation as RK4 does. Its truncation, (T/τ)(h/τ)⁴/120 = \
-         {truncation:.0e} of the {transient_m:.0} m transient, is far below rounding, N·ε·|x| = \
-         {rounding:.1e} m over N = {steps} steps."
+         {truncation:.0e} of the {transient_m:.0} m transient, is far below rounding over \
+         N = {steps} steps, which sets both tolerances: N·ε·|x| = {position_estimate:.1e} m and \
+         N·ε·|v| = {velocity_estimate:.1e} m/s."
     );
     Ok([
         Check::vector("Linear drag: position after 5 s", position, y.position, "m")
@@ -194,13 +194,13 @@ pub fn attitude(q: mjk_math::Quat) -> UnitQuat {
 /// The closed-form motion of a torque-free axisymmetric body that starts at identity attitude.
 pub struct Precession {
     /// The unit angular momentum, world axes, equal to body axes at the start.
-    axis: [f64; 3],
+    axis: Vec3<World>,
     /// The space precession rate `|L|/I_t`, rad/s.
     space_rate: f64,
     /// The body precession rate `Ω = (I_a − I_t)ω₃/I_t`, rad/s.
     body_rate: f64,
     /// Unit vectors spanning the plane normal to the momentum.
-    plane: ([f64; 3], [f64; 3]),
+    plane: (Vec3<World>, Vec3<World>),
 }
 
 impl Precession {
@@ -208,7 +208,8 @@ impl Precession {
     /// starts at identity attitude with body rates `omega`, Eq. (VAL-4).
     #[must_use]
     pub fn of(transverse: f64, axial: f64, omega: Vec3<Body>) -> Self {
-        let momentum = [transverse * omega.x, transverse * omega.y, axial * omega.z];
+        // At identity attitude, body and world axes coincide.
+        let momentum = Vec3::new(transverse * omega.x, transverse * omega.y, axial * omega.z);
         Self::new(
             momentum,
             transverse,
@@ -216,25 +217,24 @@ impl Precession {
         )
     }
 
-    fn new(momentum: [f64; 3], transverse: f64, body_rate: f64) -> Self {
-        let length = dot(momentum, momentum).sqrt();
-        let axis = momentum.map(|c| c / length);
+    fn new(momentum: Vec3<World>, transverse: f64, body_rate: f64) -> Self {
+        let length = momentum.norm();
+        let axis = momentum / length;
         // The symmetry axis, minus its component along the momentum.
-        let along = axis[2];
-        let u = [-along * axis[0], -along * axis[1], 1.0 - along * axis[2]];
-        let u = u.map(|c| c / dot(u, u).sqrt());
+        let u = Vec3::new(0.0, 0.0, 1.0) - axis * axis.z;
+        let u = u / u.norm();
         Self {
             axis,
             space_rate: length / transverse,
             body_rate,
-            plane: (u, cross(axis, u)),
+            plane: (u, axis.cross(u)),
         }
     }
 
     /// The angle of the body's symmetry axis around the momentum.
     fn space_angle(&self, attitude: UnitQuat) -> f64 {
-        let e3 = attitude.rotate_array([0.0, 0.0, 1.0]);
-        libm::atan2(dot(e3, self.plane.1), dot(e3, self.plane.0))
+        let e3 = Vec3::<World>::from_array(attitude.rotate_array([0.0, 0.0, 1.0]));
+        libm::atan2(e3.dot(self.plane.1), e3.dot(self.plane.0))
     }
 
     /// The space precession rate `|L|/I_t`, rad/s.
@@ -246,8 +246,8 @@ impl Precession {
     /// `Rot(L̂, |L|t/I_t) · Rot(e₃, −Ω t)`, Eq. (VAL-6).
     #[must_use]
     pub fn attitude(&self, t: f64) -> UnitQuat {
-        let space = self.axis.map(|c| c * self.space_rate * t);
-        UnitQuat::exp(space) * UnitQuat::exp([0.0, 0.0, -self.body_rate * t])
+        let space = self.axis * self.space_rate * t;
+        UnitQuat::exp(space.to_array()) * UnitQuat::exp([0.0, 0.0, -self.body_rate * t])
     }
 
     fn checks(
@@ -303,18 +303,6 @@ impl Precession {
     }
 }
 
-fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
-    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-}
-
-fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
-    [
-        a[1] * b[2] - a[2] * b[1],
-        a[2] * b[0] - a[0] * b[2],
-        a[0] * b[1] - a[1] * b[0],
-    ]
-}
-
 // ---------------------------------------------------------------- intermediate axis
 
 /// A torque-free body spinning near its intermediate axis for 60 s: the flip interval against
@@ -367,11 +355,14 @@ struct Invariants {
 
 impl Invariants {
     fn of(moments: [f64; 3], omega: Vec3<Body>) -> Self {
-        let w = omega.to_array();
-        let l = [moments[0] * w[0], moments[1] * w[1], moments[2] * w[2]];
+        let l = Vec3::<Body>::new(
+            moments[0] * omega.x,
+            moments[1] * omega.y,
+            moments[2] * omega.z,
+        );
         Self {
-            momentum: dot(l, l).sqrt(),
-            energy: dot(l, w),
+            momentum: l.norm(),
+            energy: l.dot(omega),
         }
     }
 

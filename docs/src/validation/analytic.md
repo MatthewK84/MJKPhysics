@@ -25,7 +25,7 @@ Why each tolerance:
 
 - **1.** RKMK4 integrates translation as RK4 does, and RK4's stages integrate a constant acceleration exactly, so only rounding remains: at most N·ε·z = 1.1e-9 over N = 10000 steps.
 - **2.** RKMK4 integrates translation as RK4 does, and RK4's stages integrate a constant acceleration exactly, so only rounding remains: at most N·ε·v = 2.2e-10 over N = 10000 steps.
-- **3–4.** RKMK4 integrates translation as RK4 does. Its truncation, (T/τ)(h/τ)⁴/120 = 4e-17 of the 231 m transient, is far below rounding, N·ε·|x| = 7.8e-11 m over N = 5000 steps.
+- **3–4.** RKMK4 integrates translation as RK4 does. Its truncation, (T/τ)(h/τ)⁴/120 = 4e-17 of the 231 m transient, is far below rounding over N = 5000 steps, which sets both tolerances: N·ε·|x| = 7.8e-11 m and N·ε·|v| = 2.7e-11 m/s.
 - **5.** RK4-type phase error over the run, N·(h·ω)⁵/120 divided by T = 10 s, with ω = 9.00 rad/s: 4.9e-10 rad/s.
 - **6.** RK4-type phase error over the run, N·(h·ω)⁵/120 divided by T = 10 s, with ω = 12.04 rad/s: 2.2e-9 rad/s.
 - **7.** RK4-type phase error, N·(h·ω)⁵/120 with ω = 12.04 rad/s, plus rounding: 2.2e-8 rad.
