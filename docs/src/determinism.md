@@ -223,8 +223,8 @@ change moves ω by about $`2\times10^{-17}`$ rad/s. That is below the resolution
 
 ## Limitations
 
-- **Logs live in memory.** Writing them to a file and `mjk replay` arrive with the command-line
-  tool ([#17](https://github.com/MatthewK84/MJKPhysics/issues/17)).
+- **Logs live in memory until the run ends.** `mjk run` then writes them to a file and
+  `mjk replay` checks a file against a new run, to the bit ([Command-line tool](cli.md)).
 - **Only logged inputs replay.** A change made through `World::model_mut` bypasses the log.
 - **NaN payloads.** WebAssembly may give a NaN a different payload or sign than native code does.
   A NaN in the state already means the run has failed (a degenerate attitude makes every rate NaN,

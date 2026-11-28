@@ -42,9 +42,9 @@ The first problem found is returned.
 - **Comments are encouraged**, especially to explain where a number came from. Structured source
   citations for every parameter arrive with the full airframe format
   ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)).
-- **Machine output is JSON**, written by front ends such as logs and validation tables
-  ([#17](https://github.com/MatthewK84/MJKPhysics/issues/17)). Configuration types implement
-  serde's `Serialize` for that purpose.
+- **Machine output is JSON**, written by front ends: run logs, for example
+  ([Command-line tool](cli.md#run-logs)). Configuration types implement serde's `Serialize` for
+  that purpose.
 
 ## A minimal airframe
 

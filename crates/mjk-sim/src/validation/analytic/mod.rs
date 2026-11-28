@@ -195,6 +195,12 @@ impl Check {
     }
 }
 
+/// True if every check passed.
+#[must_use]
+pub fn passed(checks: &[Check]) -> bool {
+    checks.iter().all(Check::passed)
+}
+
 /// Ten times `estimate`, rounded up to a power of ten.
 #[must_use]
 pub fn tolerance_from(estimate: f64) -> f64 {

@@ -20,5 +20,5 @@ mod document;
 mod mass;
 
 pub use airframe::{AirframeConfig, load_airframe};
-pub use document::{DocumentKind, NEWEST_SCHEMA_VERSION, OLDEST_SCHEMA_VERSION};
+pub use document::{DocumentKind, NEWEST_SCHEMA_VERSION, OLDEST_SCHEMA_VERSION, field_path};
 pub use mass::MassConfig;

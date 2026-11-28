@@ -16,6 +16,8 @@ use mjk_dynamics::{
 };
 use mjk_math::{Body, Mat3, Rotation, StateHash, StateHasher, Vec3, Xoshiro256StarStar};
 
+use crate::log::{Channel, ColumnLog, LogError};
+
 /// The master seed of the published run.
 pub const MASTER_SEED: u64 = 14;
 
@@ -43,6 +45,72 @@ pub const CHECKPOINT_HZ: u32 = 1;
 
 /// Checkpoints in a run.
 const CHECKPOINTS: usize = 11;
+
+/// Rows of the state log per second.
+pub const SAMPLE_HZ: u32 = 100;
+
+/// Rows of the state log in a run: tick 0, then every 10 ticks to the end.
+const SAMPLES: usize = 1001;
+
+/// The channels of the state log: time, then the rigid-body state.
+pub const CHANNELS: [Channel; 14] = [
+    Channel {
+        name: "time",
+        unit: "s",
+    },
+    Channel {
+        name: "north",
+        unit: "m",
+    },
+    Channel {
+        name: "east",
+        unit: "m",
+    },
+    Channel {
+        name: "down",
+        unit: "m",
+    },
+    Channel {
+        name: "velocity_north",
+        unit: "m/s",
+    },
+    Channel {
+        name: "velocity_east",
+        unit: "m/s",
+    },
+    Channel {
+        name: "velocity_down",
+        unit: "m/s",
+    },
+    Channel {
+        name: "attitude_w",
+        unit: "1",
+    },
+    Channel {
+        name: "attitude_x",
+        unit: "1",
+    },
+    Channel {
+        name: "attitude_y",
+        unit: "1",
+    },
+    Channel {
+        name: "attitude_z",
+        unit: "1",
+    },
+    Channel {
+        name: "roll_rate",
+        unit: "rad/s",
+    },
+    Channel {
+        name: "pitch_rate",
+        unit: "rad/s",
+    },
+    Channel {
+        name: "yaw_rate",
+        unit: "rad/s",
+    },
+];
 
 /// Ticks between pilot commands: two a second, twenty in a run.
 const PILOT_INTERVAL_TICKS: u64 = 500;
@@ -77,6 +145,8 @@ pub enum ScenarioError {
     Rate(RateError),
     /// A checkpoint or input record was too small for the run.
     Record(RecordError),
+    /// The state log was too small for the run.
+    Log(LogError),
 }
 
 impl fmt::Display for ScenarioError {
@@ -85,6 +155,7 @@ impl fmt::Display for ScenarioError {
             Self::Mass(error) => write!(f, "the reference vehicle is not physical: {error}"),
             Self::Rate(error) => write!(f, "a scenario rate is not usable: {error}"),
             Self::Record(error) => write!(f, "a scenario record is too small: {error}"),
+            Self::Log(error) => write!(f, "the scenario's state log is too small: {error}"),
         }
     }
 }
@@ -104,6 +175,12 @@ impl From<RateError> for ScenarioError {
 impl From<RecordError> for ScenarioError {
     fn from(error: RecordError) -> Self {
         Self::Record(error)
+    }
+}
+
+impl From<LogError> for ScenarioError {
+    fn from(error: LogError) -> Self {
+        Self::Log(error)
     }
 }
 
@@ -281,25 +358,57 @@ pub struct Run {
     pub final_command: PilotCommand,
 }
 
-/// Flies the reference world for the whole run, calling `before_step` before every step and
-/// taking a checkpoint whenever one is due.
-fn fly<F>(mut world: ReferenceWorld, mut before_step: F) -> Result<Run, ScenarioError>
+/// Flies the reference world for the whole run, calling `before_step` before every step, and
+/// taking a checkpoint and logging the state whenever each is due. Logging only reads the state,
+/// so it cannot change a fingerprint.
+fn fly<F>(mut world: ReferenceWorld, mut before_step: F) -> Result<(Run, ColumnLog), ScenarioError>
 where
     F: FnMut(&mut ReferenceWorld) -> Result<(), ScenarioError>,
 {
     let mut checkpoints = Checkpoints::new(Rate::new(PHYSICS_HZ, CHECKPOINT_HZ)?, CHECKPOINTS);
+    let sampler = Rate::new(PHYSICS_HZ, SAMPLE_HZ)?;
+    let mut log = ColumnLog::new(&CHANNELS, SAMPLES);
     for _ in 0..TICKS {
         before_step(&mut world)?;
         world.checkpoint(&mut checkpoints)?;
+        sample(&world, sampler, &mut log)?;
         world.step();
     }
     world.checkpoint(&mut checkpoints)?;
-    Ok(Run {
+    sample(&world, sampler, &mut log)?;
+    let run = Run {
         checkpoints: checkpoints.records().to_vec(),
         final_hash: world.state_hash(),
         final_state: *world.current(),
         final_command: world.model().command,
-    })
+    };
+    Ok((run, log))
+}
+
+/// Logs the state, in [`CHANNELS`] order, on the ticks `sampler` runs.
+fn sample(world: &ReferenceWorld, sampler: Rate, log: &mut ColumnLog) -> Result<(), LogError> {
+    if !sampler.is_due(world.clock().tick()) {
+        return Ok(());
+    }
+    let state = world.current();
+    let (position, velocity) = (state.position, state.velocity);
+    let (attitude, rate) = (state.attitude, state.angular_velocity);
+    log.push(&[
+        world.clock().time_s(),
+        position.x,
+        position.y,
+        position.z,
+        velocity.x,
+        velocity.y,
+        velocity.z,
+        attitude.w,
+        attitude.x,
+        attitude.y,
+        attitude.z,
+        rate.x,
+        rate.y,
+        rate.z,
+    ])
 }
 
 /// Flies the scenario seeded with `seed`, with a random pilot command from the `pilot` stream
@@ -309,15 +418,25 @@ where
 ///
 /// A [`ScenarioError`], which the published configuration never produces.
 pub fn record(seed: u64) -> Result<(Run, InputLog<PilotCommand>), ScenarioError> {
+    let (run, inputs, _) = record_logged(seed)?;
+    Ok((run, inputs))
+}
+
+/// [`record`], with the state logged at [`SAMPLE_HZ`] in [`CHANNELS`].
+///
+/// # Errors
+///
+/// A [`ScenarioError`], which the published configuration never produces.
+pub fn record_logged(seed: u64) -> Result<(Run, InputLog<PilotCommand>, ColumnLog), ScenarioError> {
     let mut pilot = Xoshiro256StarStar::named(seed, PILOT_STREAM);
     let mut inputs = InputLog::with_capacity(PILOT_COMMANDS);
-    let run = fly(reference_world(seed)?, |world| {
+    let (run, log) = fly(reference_world(seed)?, |world| {
         if world.clock().tick().is_multiple_of(PILOT_INTERVAL_TICKS) {
             world.apply(pilot_command(&mut pilot), &mut inputs)?;
         }
         Ok(())
     })?;
-    Ok((run, inputs))
+    Ok((run, inputs, log))
 }
 
 /// Flies the scenario seeded with `seed` again, taking its pilot commands from `inputs` instead
@@ -327,11 +446,29 @@ pub fn record(seed: u64) -> Result<(Run, InputLog<PilotCommand>), ScenarioError>
 ///
 /// A [`ScenarioError`], which the published configuration never produces.
 pub fn replay(seed: u64, inputs: &InputLog<PilotCommand>) -> Result<Run, ScenarioError> {
+    replay_logged(seed, inputs).map(|(run, _)| run)
+}
+
+/// [`replay`], with the state logged at [`SAMPLE_HZ`] in [`CHANNELS`].
+///
+/// # Errors
+///
+/// A [`ScenarioError`], which the published configuration never produces.
+pub fn replay_logged(
+    seed: u64,
+    inputs: &InputLog<PilotCommand>,
+) -> Result<(Run, ColumnLog), ScenarioError> {
     let mut replay = Replay::new(inputs);
     fly(reference_world(seed)?, |world| {
         world.replay_due(&mut replay);
         Ok(())
     })
+}
+
+/// True if a replay reproduced the recorded run: every checkpoint and the final fingerprint.
+#[must_use]
+pub fn reproduced(recorded: &Run, replayed: &Run) -> bool {
+    recorded.checkpoints == replayed.checkpoints && recorded.final_hash == replayed.final_hash
 }
 
 /// The published study: the run seeded with [`MASTER_SEED`], and the replay of its inputs.

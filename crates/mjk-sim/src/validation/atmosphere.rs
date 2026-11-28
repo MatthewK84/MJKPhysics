@@ -95,6 +95,15 @@ fn float_to_i64(value: f64) -> i64 {
 const HEADER: &str = "| Z (m) | Source | T (K) | P (Pa) | ρ (kg/m³) | a (m/s) | μ (µPa·s) \
                       | Gap |\n|---:|---|---:|---:|---:|---:|---:|---:|\n";
 
+/// The largest gap that still agrees to four significant figures, in units of the fourth.
+pub const FOUR_FIGURES: f64 = 0.5;
+
+/// True if the model agrees with the table to four significant figures at every altitude.
+#[must_use]
+pub fn passed(rows: &[StudyRow]) -> bool {
+    rows.iter().all(|row| row.worst_gap <= FOUR_FIGURES)
+}
+
 /// The study as a Markdown table, as `mjk validate atmosphere` prints it and the book includes it.
 #[must_use]
 pub fn markdown(rows: &[StudyRow]) -> String {
