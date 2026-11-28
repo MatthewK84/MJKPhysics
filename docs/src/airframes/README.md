@@ -1,9 +1,13 @@
 # Airframes
 
 Four aircraft are modeled, chosen for the quality of their public data. Each airframe file gives
-every parameter a unit, a source and, where known, an uncertainty. Parameter pages will be
-generated from those files ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)), so the
-book can never disagree with what the simulator loads.
+every parameter a unit, a source and, where known, an uncertainty
+([format](../configuration.md#the-airframe-format)). Each airframe's page is generated from its
+file by `mjk airframe`, and a test fails if the two disagree, so the book can never disagree with
+what the simulator loads ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)).
+
+The [example quadrotor](example-quadrotor.md) shows the format and its generated page. Its values
+are illustrative, and its only source says so.
 
 | Airframe | Class | Primary sources | Issue |
 |---|---|---|---|

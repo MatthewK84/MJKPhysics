@@ -273,6 +273,17 @@ jobs:
           echo "run reference: native and WebAssembly logs match byte for byte"
           wasi replay - < "$RUNNER_TEMP/run-native.json"
           target/release/mjk replay - < "$RUNNER_TEMP/run-wasm.json"
+      - name: An airframe page is identical natively, in WebAssembly and in the book (#18)
+        run: |
+          wasm=target/wasm32-wasip1/release/mjk.wasm
+          airframe=airframes/example-quadrotor.toml
+          page=docs/src/airframes/example-quadrotor.md
+          target/release/mjk airframe "$airframe" > "$RUNNER_TEMP/airframe-native.md"
+          node --disable-warning=ExperimentalWarning viewer/scripts/run-wasi.mjs "$wasm" \
+            airframe - < "$airframe" > "$RUNNER_TEMP/airframe-wasm.md"
+          diff -u "$RUNNER_TEMP/airframe-native.md" "$RUNNER_TEMP/airframe-wasm.md"
+          diff -u "$page" "$RUNNER_TEMP/airframe-native.md"
+          echo "$airframe: native and WebAssembly pages match $page byte for byte"
 
   viewer:
     name: Viewer

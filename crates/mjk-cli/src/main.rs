@@ -9,8 +9,11 @@
 //! - `mjk run reference` flies the reference scenario and writes its log; scenario files arrive
 //!   with [#28](https://github.com/MatthewK84/MJKPhysics/issues/28).
 //! - `mjk replay <log>` flies a recorded run again and checks it, to the bit.
+//! - `mjk airframe <file>` loads an airframe file and prints its page, every parameter with its
+//!   source.
 //! - `mjk random` writes named random streams for statistical test suites.
 
+mod airframe;
 mod args;
 mod exit;
 mod files;
@@ -48,6 +51,7 @@ fn execute(command: Command) -> Result<Exit, Failure> {
         Command::Timing => validate::timing(),
         Command::Run(options) => run::run(&options),
         Command::Replay { log } => replay::run(&log),
+        Command::Airframe { file } => airframe::run(&file),
         Command::Random(rest) => random::run(&rest),
     }
 }

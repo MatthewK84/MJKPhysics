@@ -1,12 +1,32 @@
+# A minimal valid airframe: header, a source, mass properties, and one rotor that can lift it.
 schema_version = 1
 kind = "airframe"
 name = "Example quadrotor"
 
+[sources.sheet]
+title = "Example data sheet"
+
 [mass]
-mass_kg = 1.5
-cg_m = [0.0, nan, 0.01]
-inertia_kg_m2 = [
+mass = { value = 1.5, unit = "kg", source = "sheet" }
+cg = { value = [0.0, nan, 0.01], unit = "m", source = "sheet" }
+
+[mass.inertia]
+value = [
   [0.0290, 0.0000, 0.0004],
   [0.0000, 0.0300, 0.0000],
   [0.0004, 0.0000, 0.0550],
 ]
+unit = "kg m^2"
+source = "sheet"
+
+[[rotors]]
+name = "front right"
+position = { value = [0.16, 0.16, -0.03], unit = "m", source = "sheet" }
+axis = { value = [0, 0, -1], unit = "1", source = "sheet" }
+spin = "ccw"
+propeller = "p10"
+
+[propellers.p10]
+diameter = { value = 10, unit = "in", source = "sheet" }
+blades = { value = 2, unit = "1", source = "sheet" }
+max_thrust = { value = 2, unit = "kgf", source = "sheet" }

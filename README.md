@@ -41,8 +41,9 @@ fixed-wing aircraft.
 > frame-typed math, the SO(3) maps, the rigid-body equations of motion, the integrators
 > (including the Lie-group method), the fixed-step world loop, determinism and replay, gravity
 > and the standard atmosphere, the analytic validation suite, and the `mjk` command-line tool.
-> [M2 · Multirotor](https://github.com/MatthewK84/MJKPhysics/milestone/3) starts with the
-> airframe format.
+> [M2 · Multirotor](https://github.com/MatthewK84/MJKPhysics/milestone/3) is under way: the
+> airframe format, with a unit and a source on every number, is done, and the motor and ESC
+> model is next.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.

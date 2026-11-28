@@ -14,8 +14,9 @@ every parameter, and how the implementation was checked.
 > [determinism and replay](determinism.md), [gravity and the standard
 > atmosphere](models/atmosphere.md), the [analytic validation
 > suite](validation/README.md#analytic-checks) and the [command-line tool](cli.md). Milestone M2,
-> the multirotor, starts with the airframe format
-> ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)). The book grows with the
+> the multirotor, is under way: the [airframe format](configuration.md#the-airframe-format) is
+> done, and the motor and ESC model
+> ([#19](https://github.com/MatthewK84/MJKPhysics/issues/19)) is next. The book grows with the
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 

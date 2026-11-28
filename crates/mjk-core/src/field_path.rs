@@ -13,8 +13,10 @@ pub enum Segment {
 
 /// The location of a value inside a configuration document.
 ///
-/// Displayed the way the value is written in a file, for example `rotors[2].position_m`.
-/// The empty path is the whole document and is displayed as `(document)`.
+/// Displayed the way the value is written in a file, for example `rotors[2].position_m`. A key
+/// that is not a bare TOML key, made of letters, digits, `_` and `-`, is quoted, as in
+/// `propellers."10x4.5".diameter`. The empty path is the whole document and is displayed as
+/// `(document)`.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FieldPath {
     segments: Vec<Segment>,
@@ -65,13 +67,25 @@ impl fmt::Display for FieldPath {
         }
         for (position, segment) in self.segments.iter().enumerate() {
             match segment {
-                Segment::Key(name) if position == 0 => f.write_str(name)?,
-                Segment::Key(name) => write!(f, ".{name}")?,
+                Segment::Key(name) if position == 0 => f.write_str(&quoted(name))?,
+                Segment::Key(name) => write!(f, ".{}", quoted(name))?,
                 Segment::Index(index) => write!(f, "[{index}]")?,
             }
         }
         Ok(())
     }
+}
+
+/// A key as TOML writes it: bare if it can be, otherwise in quotes.
+fn quoted(name: &str) -> String {
+    let bare = !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+    if bare {
+        return name.to_owned();
+    }
+    format!("\"{}\"", name.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
 #[cfg(test)]
@@ -102,6 +116,25 @@ mod tests {
         assert_eq!(
             built,
             FieldPath::root().key("rotors").index(2).key("position_m")
+        );
+    }
+
+    #[test]
+    fn keys_that_are_not_bare_are_quoted() {
+        let path = FieldPath::root()
+            .key("propellers")
+            .key("10x4.5")
+            .key("diameter");
+        assert_eq!(path.to_string(), "propellers.\"10x4.5\".diameter");
+        assert_eq!(FieldPath::root().key("a b").to_string(), "\"a b\"");
+        assert_eq!(FieldPath::root().key("").to_string(), "\"\"");
+        assert_eq!(
+            FieldPath::root().key("say \"hi\" \\").to_string(),
+            "\"say \\\"hi\\\" \\\\\""
+        );
+        assert_eq!(
+            FieldPath::root().key("2212-920_b").to_string(),
+            "2212-920_b"
         );
     }
 
