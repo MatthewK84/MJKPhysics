@@ -13,6 +13,7 @@ usage: mjk --version | --help
        mjk validate (integrators [--timing] | determinism | atmosphere | analytic)
        mjk run reference [--seed <n>] [--log <file.json>] [--csv <file.csv>]
        mjk replay <file.json>
+       mjk airframe <file.toml>
        mjk random <seed> <name>... --bytes <n>
 A file named - is standard input or output.";
 
@@ -104,6 +105,11 @@ pub enum Command {
         /// The run log.
         log: String,
     },
+    /// Load an airframe and print its page.
+    Airframe {
+        /// The airframe file.
+        file: String,
+    },
     /// Write random streams.
     Random(Vec<String>),
 }
@@ -123,6 +129,10 @@ pub fn parse(words: &[&str]) -> Result<Command, Failure> {
             log: (*log).to_owned(),
         }),
         ["replay", ..] => Err(Failure::usage("name one run log to replay")),
+        ["airframe", file] => Ok(Command::Airframe {
+            file: (*file).to_owned(),
+        }),
+        ["airframe", ..] => Err(Failure::usage("name one airframe file")),
         ["random", rest @ ..] => Ok(Command::Random(
             rest.iter().map(|word| (*word).to_owned()).collect(),
         )),

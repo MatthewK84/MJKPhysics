@@ -20,6 +20,7 @@
   - [Atmosphere and gravity](models/atmosphere.md)
 - [Validation](validation/README.md)
 - [Airframes](airframes/README.md)
+  - [Example quadrotor](airframes/example-quadrotor.md)
 
 # Project
 

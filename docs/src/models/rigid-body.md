@@ -131,7 +131,7 @@ mass properties are built:
   zero thickness is accepted; point masses on one line are not, since their inertia is singular.
 
 Configuration files report any violation as an `EngineError::Config` naming the field, for
-example `mass.inertia_kg_m2`.
+example `mass.inertia.value`.
 
 ## Parameters
 

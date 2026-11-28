@@ -14,6 +14,7 @@ reads and writes every file and turns engine errors into messages and exit codes
 | `mjk validate integrators --timing` | Prints the wall-clock time per step of each integration method. These numbers depend on the machine. |
 | `mjk run reference [--seed <n>] [--log <file.json>] [--csv <file.csv>]` | Flies the [reference scenario](determinism.md#the-reference-run) for 10 s and prints a summary. Writes the run log as JSON and the state log as CSV. |
 | `mjk replay <file.json>` | Flies a recorded run again with its recorded inputs and checks every sample and fingerprint. |
+| `mjk airframe <file.toml>` | Loads an airframe file and prints its page: every parameter with its unit, SI value, uncertainty and source ([Configuration files](configuration.md#the-airframe-format)). Warnings go to standard error. |
 | `mjk random <seed> <name>... --bytes <n>` | Writes named random streams for statistical test suites ([Determinism](determinism.md#random-numbers)). |
 
 A file named `-` is standard input or standard output. When a log goes to standard output, the

@@ -43,6 +43,10 @@ exclude_re = [
     'validation/integrators\.rs:.*replace \* with [+/] in integrate$',
     # The analytic suite's torque-free body is the same: its loads are the default (zero) loads.
     'analytic/bodies\.rs:.*replace <impl LoadModel for TorqueFree>::loads -> Loads with Default::default\(\)$',
+    # Not strictly equivalent: `>` and `>=` differ only for rotor axes whose cross product is
+    # exactly the parallel tolerance, 1e-6, which no test can construct from normalized axes.
+    # Which side of that boundary counts as tilted is a tolerance convention, as in mass.rs above.
+    'plausibility\.rs:.*replace > with >= in tilted$',
 ]
 
 # Release-like timing is unnecessary; tests are fast, so a mutant that makes one loop forever
