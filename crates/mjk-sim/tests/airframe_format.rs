@@ -648,39 +648,96 @@ fn thrust_to_weight_is_total_thrust_over_weight() {
 
 // ---------------------------------------------------------------- propulsion and the rest
 
+/// The valid fixture with its rotor driven by motor `m`, whose table is `body`.
+fn with_motor(body: &str) -> Option<String> {
+    edited(&[("propeller = \"p10\"", "propeller = \"p10\"\nmotor = \"m\"")])
+        .map(|text| format!("{text}\n[motors.m]\n{body}"))
+}
+
+const ELECTRICAL: &str = "kv = { value = 920, unit = \"rpm/V\", source = \"sheet\" }
+resistance = { value = 0.1, unit = \"ohm\", source = \"sheet\" }
+no_load_current = { value = 0.4, unit = \"A\", source = \"sheet\" }
+";
+
+const LAG: &str = "time_constant = { value = 30, unit = \"ms\", source = \"sheet\" }
+max_speed = { value = 24000, unit = \"rpm\", source = \"sheet\" }
+";
+
+const MOTOR_INERTIA: &str = "inertia = { value = 200, unit = \"g cm^2\", source = \"sheet\" }\n";
+
 #[test]
-fn motors_are_electrical_or_a_time_constant() {
-    let motor = |body: &str| {
-        edited(&[("propeller = \"p10\"", "propeller = \"p10\"\nmotor = \"m\"")])
-            .map(|text| format!("{text}\n[motors.m]\n{body}"))
-    };
-    let electrical = "kv = { value = 920, unit = \"rpm/V\", source = \"sheet\" }\nresistance = { value = 0.1, unit = \"ohm\", source = \"sheet\" }\nno_load_current = { value = 0.4, unit = \"A\", source = \"sheet\" }\n";
-    let loaded = load(&motor(electrical).expect("edits")).expect("loads");
+fn motors_are_electrical_or_a_time_constant_with_a_top_speed() {
+    let electrical = with_motor(&format!("{ELECTRICAL}{MOTOR_INERTIA}")).expect("edits");
+    let loaded = load(&electrical).expect("loads");
     let kv = loaded.airframe.motors["m"].kv_rad_s_v.expect("kv");
     assert!((kv - 920.0 * 2.0 * core::f64::consts::PI / 60.0).abs() < 1e-12);
-    let lag = load(
-        &motor("time_constant = { value = 30, unit = \"ms\", source = \"sheet\" }\n")
-            .expect("edits"),
-    )
-    .expect("loads");
+    let lag = load(&with_motor(LAG).expect("edits")).expect("loads");
     assert_eq!(lag.airframe.motors["m"].time_constant_s, Some(0.03));
+    let top = lag.airframe.motors["m"].max_speed_rad_s.expect("max speed");
+    assert!((top - 24_000.0 * 2.0 * core::f64::consts::PI / 60.0).abs() < 1e-9);
+    let cases = [
+        (
+            "kv = { value = 920, unit = \"rpm/V\", source = \"sheet\" }\n",
+            "give kv, resistance and no_load_current together",
+        ),
+        (
+            "mass = { value = 50, unit = \"g\", source = \"sheet\" }\n",
+            "give kv, resistance and no_load_current, or time_constant and max_speed",
+        ),
+        (
+            "time_constant = { value = 30, unit = \"ms\", source = \"sheet\" }\n",
+            "give time_constant and max_speed together",
+        ),
+        (
+            "max_speed = { value = 24000, unit = \"rpm\", source = \"sheet\" }\n",
+            "give time_constant and max_speed together",
+        ),
+    ];
+    for (body, reason) in cases {
+        assert_eq!(
+            refusal(with_motor(body)),
+            Some(refused("motors.m", reason)),
+            "{body}"
+        );
+    }
+    assert_refused(
+        with_motor(
+            "time_constant = { value = 30, unit = \"ms\", source = \"sheet\" }\nmax_speed = { value = 400, unit = \"Hz\", source = \"sheet\" }\n",
+        ),
+        "motors.m.max_speed.unit",
+        "`Hz` is not an angular rate; use a unit such as rpm or rad/s",
+    );
+}
+
+#[test]
+fn an_electrical_motor_needs_the_inertia_it_turns() {
     assert_eq!(
-        refusal(motor(
-            "kv = { value = 920, unit = \"rpm/V\", source = \"sheet\" }\n"
-        )),
+        refusal(with_motor(ELECTRICAL)),
         Some(refused(
-            "motors.m",
-            "give kv, resistance and no_load_current together"
+            "rotors[0]",
+            "motor `m` is electrical, so it needs the inertia it turns: give the motor's inertia, \
+             the propeller's, or both"
         ))
     );
-    assert_eq!(
-        refusal(motor(
-            "mass = { value = 50, unit = \"g\", source = \"sheet\" }\n"
-        )),
-        Some(refused(
-            "motors.m",
-            "give kv, resistance and no_load_current, or a time_constant"
-        ))
+    let propeller_only = with_motor(ELECTRICAL).and_then(|text| {
+        let anchor = "max_thrust = { value = 2, unit = \"kgf\", source = \"sheet\" }";
+        text.contains(anchor).then(|| {
+            text.replacen(
+                anchor,
+                &format!(
+                    "{anchor}\ninertia = {{ value = 645, unit = \"g cm^2\", source = \"sheet\" }}"
+                ),
+                1,
+            )
+        })
+    });
+    assert!(
+        load(&propeller_only.expect("edits")).is_ok(),
+        "the propeller's inertia is enough"
+    );
+    assert!(
+        load(&with_motor(LAG).expect("edits")).is_ok(),
+        "the lag tier needs no inertia"
     );
 }
 
@@ -758,7 +815,7 @@ fn bad_values_in_the_other_tables_are_refused() {
 #[test]
 fn parts_no_rotor_uses_are_reported() {
     let text = extended(
-        "\n[propellers.spare]\ndiameter = { value = 5, unit = \"in\", source = \"sheet\" }\nblades = { value = 3, unit = \"1\", source = \"sheet\" }\nmax_thrust = { value = 1, unit = \"N\", source = \"sheet\" }\n\n[motors.spare]\ntime_constant = { value = 0.02, unit = \"s\", source = \"sheet\" }\n\n[escs.spare]\nbraking = \"none\"\n",
+        "\n[propellers.spare]\ndiameter = { value = 5, unit = \"in\", source = \"sheet\" }\nblades = { value = 3, unit = \"1\", source = \"sheet\" }\nmax_thrust = { value = 1, unit = \"N\", source = \"sheet\" }\n\n[motors.spare]\ntime_constant = { value = 0.02, unit = \"s\", source = \"sheet\" }\nmax_speed = { value = 2000, unit = \"rad/s\", source = \"sheet\" }\n\n[escs.spare]\nbraking = \"none\"\n",
     );
     let loaded = load(&text).expect("loads");
     let warnings: Vec<String> = loaded.warnings.iter().map(ToString::to_string).collect();
@@ -785,7 +842,7 @@ fn the_published_page_matches_the_example_airframe() {
 fn the_page_lists_every_parameter_with_its_source() {
     let loaded = load(EXAMPLE).expect("loads");
     let page = airframe_page(&loaded);
-    assert_eq!(loaded.parameters.len(), 70);
+    assert_eq!(loaded.parameters.len(), 72);
     for record in &loaded.parameters {
         let row = format!(
             "| `{}` | {} | `{}` | {} |",

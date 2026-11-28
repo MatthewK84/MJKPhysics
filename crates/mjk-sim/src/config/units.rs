@@ -340,6 +340,9 @@ pub mod quantities {
     pub const RATE_PER_S: Quantity = quantity("a rate", FREQUENCY, "1/s", "1/s");
     /// Angle, rad.
     pub const ANGLE_RAD: Quantity = quantity("an angle", ANGLE, "rad", "deg or rad");
+    /// Angular rate, rad/s.
+    pub const ANGULAR_RATE_RAD_S: Quantity =
+        quantity("an angular rate", ANGULAR_RATE, "rad/s", "rpm or rad/s");
     /// Current, A.
     pub const CURRENT_A: Quantity = quantity("a current", CURRENT, "A", "A or mA");
     /// Resistance, Ω.

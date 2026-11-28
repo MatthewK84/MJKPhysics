@@ -10,7 +10,7 @@ use crate::files::STDIO;
 pub const USAGE: &str = "\
 usage: mjk --version | --help
        mjk validate [--out <dir>]
-       mjk validate (integrators [--timing] | determinism | atmosphere | analytic)
+       mjk validate (integrators [--timing] | determinism | atmosphere | analytic | motor)
        mjk run reference [--seed <n>] [--log <file.json>] [--csv <file.csv>]
        mjk replay <file.json>
        mjk airframe <file.toml>
@@ -31,15 +31,18 @@ pub enum Study {
     Atmosphere,
     /// The simulation loop against closed-form solutions (#16).
     Analytic,
+    /// The motor and ESC against their closed forms (#19).
+    Motor,
 }
 
 impl Study {
     /// Every study, in the order `mjk validate` runs them.
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::Integrators,
         Self::Determinism,
         Self::Atmosphere,
         Self::Analytic,
+        Self::Motor,
     ];
 
     /// Its name on the command line.
@@ -50,6 +53,7 @@ impl Study {
             Self::Determinism => "determinism",
             Self::Atmosphere => "atmosphere",
             Self::Analytic => "analytic",
+            Self::Motor => "motor",
         }
     }
 
@@ -61,6 +65,7 @@ impl Study {
             Self::Determinism => "determinism.md",
             Self::Atmosphere => "atmosphere.md",
             Self::Analytic => "analytic.md",
+            Self::Motor => "motor.md",
         }
     }
 
@@ -155,8 +160,8 @@ fn validate(words: &[&str]) -> Result<Command, Failure> {
         ["integrators", "--timing"] => Ok(Command::Timing),
         [name] => Study::named(name).map(Command::Validate).ok_or_else(|| {
             Failure::usage(format!(
-                "unknown study `{name}`: the studies are integrators, determinism, atmosphere \
-                 and analytic"
+                "unknown study `{name}`: the studies are integrators, determinism, atmosphere, \
+                 analytic and motor"
             ))
         }),
         _ => Err(Failure::usage(format!(

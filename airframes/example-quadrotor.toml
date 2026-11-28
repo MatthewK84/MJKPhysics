@@ -141,6 +141,7 @@ pitch = { value = 4.5, unit = "in", source = "illustrative" }
 blades = { value = 2, unit = "1", source = "illustrative" }
 max_thrust = { value = 1000, unit = "gf", source = "illustrative", uncertainty = 50 }
 mass = { value = 12, unit = "g", source = "illustrative" }
+inertia = { value = 645, unit = "g cm^2", source = "illustrative" }
 data = "illustrative; measured propellers cite a dataset such as the UIUC propeller database"
 
 [motors."2212-920"]
@@ -148,6 +149,7 @@ kv = { value = 920, unit = "rpm/V", source = "illustrative" }
 resistance = { value = 117, unit = "mohm", source = "illustrative" }
 no_load_current = { value = 0.4, unit = "A", source = "illustrative" }
 max_current = { value = 15, unit = "A", source = "illustrative" }
+inertia = { value = 200, unit = "g cm^2", source = "illustrative" }
 mass = { value = 55, unit = "g", source = "illustrative" }
 
 [escs.20a]

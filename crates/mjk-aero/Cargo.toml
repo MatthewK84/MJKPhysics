@@ -10,9 +10,19 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
+libm.workspace = true
 mjk-math.workspace = true
 mjk-dynamics.workspace = true
 mjk-env.workspace = true
+
+[dev-dependencies]
+mjk-alloc-counter.workspace = true
+
+# Measures allocations with a counting global allocator; without the test harness, no other
+# thread allocates while it measures.
+[[test]]
+name = "allocations"
+harness = false
 
 [lints]
 workspace = true
