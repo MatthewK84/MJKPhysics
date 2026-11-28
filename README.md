@@ -14,7 +14,7 @@
   <a href="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/MatthewK84/MJKPhysics/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="https://matthewk84.github.io/MJKPhysics/"><img alt="Docs" src="https://github.com/MatthewK84/MJKPhysics/actions/workflows/docs.yml/badge.svg?branch=main"></a>
   <a href="https://matthewk84.github.io/MJKPhysics/engineering-standards.html"><img alt="Standards: Power of Ten, mutation-tested" src="https://img.shields.io/badge/standards-Power%20of%20Ten%20%C2%B7%20mutation--tested-b79bff"></a>
-  <a href="https://github.com/MatthewK84/MJKPhysics/issues/1"><img alt="Roadmap: 85 issues" src="https://img.shields.io/badge/roadmap-85%20issues-5ee1ff"></a>
+  <a href="https://github.com/MatthewK84/MJKPhysics/issues/1"><img alt="Roadmap: 67 open issues" src="https://img.shields.io/badge/roadmap-67%20open%20issues-5ee1ff"></a>
   <img alt="Status: pre-alpha" src="https://img.shields.io/badge/status-pre--alpha-ffb547">
   <img alt="Rust 1.97" src="https://img.shields.io/badge/rust-1.97-cfe0ff">
   <a href="#license"><img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-7cf29c"></a>
@@ -232,11 +232,11 @@ The viewer aims for the look of a modern game engine while staying honest to the
 
 ## Roadmap
 
-The full plan is 85 issues across nine milestones, tracked in
-[#1](https://github.com/MatthewK84/MJKPhysics/issues/1). Each issue lists its scope, acceptance
+67 issues remain open, tracked in [#1](https://github.com/MatthewK84/MJKPhysics/issues/1): the
+66 of milestones M2 to M8, and the roadmap issue itself. Each issue lists its scope, acceptance
 criteria, references and dependencies.
 
-| Milestone | Delivers | Issues |
+| Milestone | Delivers | Issues in total |
 |---|---|---|
 | [M0 · Foundation](https://github.com/MatthewK84/MJKPhysics/milestone/1) | Workspace, lint policy, CI, conventions, docs site, config loading, engineering standards enforced in CI | 7 |
 | [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) | Frame-typed math, rigid body, four integrators, deterministic loop, analytic validation | 10 |
