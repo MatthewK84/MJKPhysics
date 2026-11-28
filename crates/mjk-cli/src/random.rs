@@ -8,9 +8,10 @@
 //! quietly.
 
 use std::io::{self, Write};
-use std::process::ExitCode;
 
 use mjk_math::Xoshiro256StarStar;
+
+use crate::exit::{Exit, Failure};
 
 const USAGE: &str = "usage: mjk random <seed> <name>... --bytes <n>";
 
@@ -57,21 +58,26 @@ fn write_streams<W: Write>(seed: u64, names: &[&str], rounds: u64, out: &mut W) 
 }
 
 /// Runs `mjk random` with the arguments after `random`.
-pub fn run(args: &[&str]) -> ExitCode {
-    let Some((seed, names, rounds)) = parse(args) else {
-        eprintln!(
-            "error: unknown arguments `random {}`\n{USAGE}",
-            args.join(" ")
-        );
-        return ExitCode::from(2);
+///
+/// # Errors
+///
+/// A usage failure for malformed arguments, and an I/O failure if standard output fails for any
+/// reason but the reader closing it.
+pub fn run(args: &[String]) -> Result<Exit, Failure> {
+    let words: Vec<&str> = args.iter().map(String::as_str).collect();
+    let Some((seed, names, rounds)) = parse(&words) else {
+        return Err(Failure::usage(format!(
+            "unknown arguments `random {}`\n{USAGE}",
+            words.join(" ")
+        )));
     };
     match write_streams(seed, &names, rounds, &mut io::stdout().lock()) {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => Ok(Exit::Success),
         // The reader has all it wanted.
-        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => ExitCode::SUCCESS,
-        Err(error) => {
-            eprintln!("error: {error}");
-            ExitCode::FAILURE
-        }
+        Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(Exit::Success),
+        Err(error) => Err(Failure::new(
+            Exit::Io,
+            format!("cannot write standard output: {error}"),
+        )),
     }
 }

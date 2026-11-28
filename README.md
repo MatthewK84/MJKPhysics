@@ -37,11 +37,12 @@ fixed-wing aircraft.
 > complete: workspace and layering, CI enforcing the
 > [engineering standards](https://matthewk84.github.io/MJKPhysics/engineering-standards.html),
 > the engineering book, and the error and configuration model.
-> [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is under way:
+> [M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2) is complete:
 > frame-typed math, the SO(3) maps, the rigid-body equations of motion, the integrators
 > (including the Lie-group method), the fixed-step world loop, determinism and replay, gravity
-> and the standard atmosphere, and the analytic validation suite are done, and the command-line
-> tool and log writer are next.
+> and the standard atmosphere, the analytic validation suite, and the `mjk` command-line tool.
+> [M2 · Multirotor](https://github.com/MatthewK84/MJKPhysics/milestone/3) starts with the
+> airframe format.
 > The banner above is a concept illustration generated from code in [`assets/readme/`](assets/readme/):
 > a true perspective projection whose frames, vectors and rotor spin directions follow the project's
 > conventions. Screenshots from the engine will replace it once the renderer milestone lands.
@@ -250,9 +251,9 @@ M3 is the first milestone where you can fly a validated quadrotor in the browser
 
 ## Getting started
 
-The math foundation (frame-typed linear algebra, quaternions and the SO(3) maps) is in place; the
-physics arrives with the rest of
-[M1 · Core dynamics](https://github.com/MatthewK84/MJKPhysics/milestone/2). You need
+The rigid-body core is in place: you can run the validation studies, and record and replay the
+reference scenario. Vehicles arrive with
+[M2 · Multirotor](https://github.com/MatthewK84/MJKPhysics/milestone/3). You need
 [rustup](https://rustup.rs); the toolchain, components and WebAssembly target are pinned in
 `rust-toolchain.toml`.
 
@@ -266,6 +267,17 @@ rustup toolchain install
 
 ```bash
 cargo build --workspace && cargo test --workspace
+```
+
+Record the reference scenario and replay it, to the bit
+([Command-line tool](https://matthewk84.github.io/MJKPhysics/cli.html)):
+
+```bash
+cargo run -p mjk-cli --release -- run reference --log run.json
+```
+
+```bash
+cargo run -p mjk-cli --release -- replay run.json
 ```
 
 Check crate layering, equation citations and the Power of Ten rules:

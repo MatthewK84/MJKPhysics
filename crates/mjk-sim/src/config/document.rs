@@ -153,8 +153,21 @@ fn shape_error(
     text: &str,
     error: &serde_path_to_error::Error<toml::de::Error>,
 ) -> EngineError {
-    let mut segments: Vec<Segment> = error
-        .path()
+    let inner = error.inner();
+    EngineError::config(
+        document,
+        field_path(error.path(), inner.message()),
+        located(text, inner),
+    )
+}
+
+/// The field a deserialization error names: serde's path to it and, for serde's "unknown field"
+/// error, the unknown key itself. `message` is the error's message.
+///
+/// Front ends use it for documents in other formats, such as the JSON of a recorded run.
+#[must_use]
+pub fn field_path(path: &serde_path_to_error::Path, message: &str) -> FieldPath {
+    let mut segments: Vec<Segment> = path
         .iter()
         .filter_map(|segment| match segment {
             serde_path_to_error::Segment::Map { key } => Some(Segment::Key(key.clone())),
@@ -163,19 +176,14 @@ fn shape_error(
             serde_path_to_error::Segment::Unknown => None,
         })
         .collect();
-    let inner = error.inner();
-    if let Some(unknown) = unknown_field(inner.message()) {
+    if let Some(unknown) = unknown_field(message) {
         // Point at the unknown key itself, unless the path already ends with it.
         let key = Segment::Key(unknown);
         if segments.last() != Some(&key) {
             segments.push(key);
         }
     }
-    EngineError::config(
-        document,
-        FieldPath::from_segments(segments),
-        located(text, inner),
-    )
+    FieldPath::from_segments(segments)
 }
 
 /// The key named in serde's "unknown field `x`" message, if this is that error.

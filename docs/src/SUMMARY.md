@@ -10,6 +10,7 @@
 - [Architecture](architecture.md)
 - [Determinism and replay](determinism.md)
 - [Configuration files](configuration.md)
+- [Command-line tool](cli.md)
 
 # Physics
 

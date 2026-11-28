@@ -14,8 +14,13 @@ name = "mjk"
 path = "src/main.rs"
 
 [dependencies]
+mjk-core.workspace = true
 mjk-math.workspace = true
 mjk-sim.workspace = true
+serde_path_to_error.workspace = true
+# Run logs are JSON. Replay needs every number to read back to the same bits, which the default
+# best-effort float parser does not guarantee.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 
 [lints]
 workspace = true

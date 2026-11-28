@@ -263,6 +263,16 @@ jobs:
             fi
           done
           exit "$status"
+      - name: A run log is identical natively and in WebAssembly, and replays across them (#17)
+        run: |
+          wasm=target/wasm32-wasip1/release/mjk.wasm
+          wasi() { node --disable-warning=ExperimentalWarning viewer/scripts/run-wasi.mjs "$wasm" "$@"; }
+          target/release/mjk run reference --log - > "$RUNNER_TEMP/run-native.json"
+          wasi run reference --log - > "$RUNNER_TEMP/run-wasm.json"
+          cmp "$RUNNER_TEMP/run-native.json" "$RUNNER_TEMP/run-wasm.json"
+          echo "run reference: native and WebAssembly logs match byte for byte"
+          wasi replay - < "$RUNNER_TEMP/run-native.json"
+          target/release/mjk replay - < "$RUNNER_TEMP/run-wasm.json"
 
   viewer:
     name: Viewer

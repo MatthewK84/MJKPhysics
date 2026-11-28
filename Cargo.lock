@@ -204,8 +204,11 @@ version = "0.0.0"
 name = "mjk-cli"
 version = "0.0.0"
 dependencies = [
+ "mjk-core",
  "mjk-math",
  "mjk-sim",
+ "serde_json",
+ "serde_path_to_error",
 ]
 
 [[package]]
@@ -271,6 +274,7 @@ version = "0.0.0"
 dependencies = [
  "libm",
  "mjk-aero",
+ "mjk-alloc-counter",
  "mjk-contact",
  "mjk-control",
  "mjk-core",

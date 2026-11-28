@@ -1,8 +1,9 @@
-//! `mjk validate` (#12, #14): each study's output is identical on every run and is what the book
-//! publishes.
+//! `mjk validate` (#12, #14, #17): each study's output is identical on every run and is what the
+//! book publishes, whether printed one study at a time or written as a set of tables.
 
-use std::io;
-use std::process::{Command, Output};
+use std::path::{Path, PathBuf};
+use std::process::{self, Command, Output};
+use std::{env, fs, io};
 
 const INTEGRATORS: &str = include_str!("../../../docs/src/validation/integrator-study.md");
 const DETERMINISM: &str = include_str!("../../../docs/src/validation/determinism.md");
@@ -30,15 +31,84 @@ fn each_study_is_byte_identical_and_matches_the_book() {
     }
 }
 
+/// A path for a fresh directory for one test; nothing is there yet.
+fn scratch(name: &str) -> io::Result<PathBuf> {
+    let dir = env::temp_dir().join(format!("mjk-validate-{}-{name}", process::id()));
+    if dir.exists() {
+        fs::remove_dir_all(&dir)?;
+    }
+    Ok(dir)
+}
+
+fn read(path: &Path) -> String {
+    fs::read_to_string(path).unwrap_or_default()
+}
+
 #[test]
-fn validate_without_a_study_names_the_choices() {
-    let output = mjk(&["validate"]).expect("the mjk binary runs");
-    assert_eq!(output.status.code(), Some(2));
+fn validate_writes_every_table_byte_identically_and_as_published() {
+    let first = scratch("first").expect("a scratch directory");
+    let second = scratch("second").expect("a scratch directory");
+    let published = [
+        ("integrator-study.md", INTEGRATORS),
+        ("determinism.md", DETERMINISM),
+        ("atmosphere.md", ATMOSPHERE),
+        ("analytic.md", ANALYTIC),
+    ];
+    for dir in [&first, &second] {
+        let output = mjk(&["validate", "--out", &dir.to_string_lossy()]).expect("runs");
+        assert!(output.status.success(), "{output:?}");
+        let listing = String::from_utf8_lossy(&output.stdout);
+        assert_eq!(listing.lines().count(), 4, "{listing}");
+        assert!(
+            listing.lines().all(|line| line.starts_with("pass  ")),
+            "{listing}"
+        );
+    }
+    for (file, table) in published {
+        assert_eq!(read(&first.join(file)), table, "{file}");
+        assert_eq!(
+            fs::read(first.join(file)).ok(),
+            fs::read(second.join(file)).ok()
+        );
+    }
+    fs::remove_dir_all(first).expect("cleaned up");
+    fs::remove_dir_all(second).expect("cleaned up");
+}
+
+#[test]
+fn validate_names_a_directory_it_cannot_create() {
+    let dir = scratch("blocked").expect("a scratch directory");
+    fs::create_dir_all(&dir).expect("the scratch directory");
+    let file = dir.join("a-file");
+    fs::write(&file, "not a directory").expect("a scratch file");
+    let blocked = file.join("tables");
+    let output = mjk(&["validate", "--out", &blocked.to_string_lossy()]).expect("runs");
+    assert_eq!(output.status.code(), Some(5));
     let text = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        text.contains("name a study: integrators, determinism, atmosphere or analytic"),
-        "{text}"
-    );
+    assert!(text.starts_with("error: cannot create "), "{text}");
+    fs::remove_dir_all(dir).expect("cleaned up");
+}
+
+#[test]
+fn unknown_studies_and_options_are_usage_errors() {
+    let cases = [
+        (
+            &["validate", "fly"][..],
+            "unknown study `fly`: the studies are integrators",
+        ),
+        (&["validate", "--out"][..], "--out takes a directory"),
+        (
+            &["validate", "analytic", "--timing"][..],
+            "unknown arguments to validate: `analytic --timing`",
+        ),
+    ];
+    for (args, message) in cases {
+        let output = mjk(args).expect("runs");
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        let text = String::from_utf8_lossy(&output.stderr);
+        assert!(text.contains(message), "{text}");
+        assert!(text.contains("usage: mjk"), "{text}");
+    }
 }
 
 #[test]

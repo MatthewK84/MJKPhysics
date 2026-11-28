@@ -7,14 +7,15 @@ every parameter, and how the implementation was checked.
 
 > **Status: pre-alpha.** Milestone M0, the foundations, is complete: the workspace and its
 > layering, CI with the [engineering standards](engineering-standards.md) enforced, this book, and
-> the error and configuration model. Milestone M1, the math and rigid-body core, is under way:
-> [frame-typed math](math-types.md), the [SO(3) maps](so3.md) and
-> [rigid-body dynamics](models/rigid-body.md) and the [integrators](models/integrators.md),
+> the error and configuration model. Milestone M1, the math and rigid-body core, is complete:
+> [frame-typed math](math-types.md), the [SO(3) maps](so3.md),
+> [rigid-body dynamics](models/rigid-body.md), the [integrators](models/integrators.md)
 > including the Lie-group method, the [world loop](architecture.md#one-simulation-step),
-> [determinism and replay](determinism.md), and [gravity and the standard
-> atmosphere](models/atmosphere.md), and the [analytic validation
-> suite](validation/README.md#analytic-checks) are done, and the command-line tool and log writer
-> ([#17](https://github.com/MatthewK84/MJKPhysics/issues/17)) are next. The book grows with the
+> [determinism and replay](determinism.md), [gravity and the standard
+> atmosphere](models/atmosphere.md), the [analytic validation
+> suite](validation/README.md#analytic-checks) and the [command-line tool](cli.md). Milestone M2,
+> the multirotor, starts with the airframe format
+> ([#18](https://github.com/MatthewK84/MJKPhysics/issues/18)). The book grows with the
 > [roadmap](https://github.com/MatthewK84/MJKPhysics/issues/1); pages for models that don't exist
 > yet are listed with the issue that will add them.
 
