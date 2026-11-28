@@ -19,6 +19,7 @@
 mod airframe;
 mod body;
 mod document;
+mod drive;
 mod mass;
 mod page;
 mod parameter;
@@ -31,6 +32,7 @@ pub mod units;
 pub use airframe::{Airframe, AirframeConfig, LoadedAirframe, load_airframe};
 pub use body::{BodyDrag, Controller, ControllerConfig, DragConfig, Visual, VisualConfig};
 pub use document::{DocumentKind, NEWEST_SCHEMA_VERSION, OLDEST_SCHEMA_VERSION, field_path};
+pub use drive::{DriveError, DriveTrain, drive_train};
 pub use mass::{ComponentConfig, MassConfig, ShapeKind};
 pub use page::airframe_page;
 pub use parameter::{

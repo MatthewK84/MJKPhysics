@@ -96,10 +96,12 @@ The mass properties are built up from these parts: `mass.components[#]` below.
 | `propellers."10x4.5".blades` | 2 | `1` | 2 | — | `illustrative` |
 | `propellers."10x4.5".max_thrust` | 1000 | `gf` | 9.80665 N | ±50 | `illustrative` |
 | `propellers."10x4.5".mass` | 12 | `g` | 0.012 kg | — | `illustrative` |
+| `propellers."10x4.5".inertia` | 645 | `g cm^2` | 6.45e-5 kg·m² | — | `illustrative` |
 | `motors.2212-920.kv` | 920 | `rpm/V` | 96.3422 rad/(s·V) | — | `illustrative` |
 | `motors.2212-920.resistance` | 117 | `mohm` | 0.117 Ω | — | `illustrative` |
 | `motors.2212-920.no_load_current` | 0.4 | `A` | 0.4 A | — | `illustrative` |
 | `motors.2212-920.max_current` | 15 | `A` | 15 A | — | `illustrative` |
+| `motors.2212-920.inertia` | 200 | `g cm^2` | 2e-5 kg·m² | — | `illustrative` |
 | `motors.2212-920.mass` | 55 | `g` | 0.055 kg | — | `illustrative` |
 | `escs.20a.latency` | 2 | `ms` | 0.002 s | — | `illustrative` |
 | `escs.20a.slew_rate` | 40 | `1/s` | 40 1/s | — | `illustrative` |

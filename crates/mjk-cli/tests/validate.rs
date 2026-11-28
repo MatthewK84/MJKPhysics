@@ -9,6 +9,7 @@ const INTEGRATORS: &str = include_str!("../../../docs/src/validation/integrator-
 const DETERMINISM: &str = include_str!("../../../docs/src/validation/determinism.md");
 const ATMOSPHERE: &str = include_str!("../../../docs/src/validation/atmosphere.md");
 const ANALYTIC: &str = include_str!("../../../docs/src/validation/analytic.md");
+const MOTOR: &str = include_str!("../../../docs/src/validation/motor.md");
 
 fn mjk(args: &[&str]) -> io::Result<Output> {
     Command::new(env!("CARGO_BIN_EXE_mjk")).args(args).output()
@@ -21,6 +22,7 @@ fn each_study_is_byte_identical_and_matches_the_book() {
         ("determinism", DETERMINISM),
         ("atmosphere", ATMOSPHERE),
         ("analytic", ANALYTIC),
+        ("motor", MOTOR),
     ];
     for (study, published) in studies {
         let first = mjk(&["validate", study]).expect("the mjk binary runs");
@@ -53,12 +55,13 @@ fn validate_writes_every_table_byte_identically_and_as_published() {
         ("determinism.md", DETERMINISM),
         ("atmosphere.md", ATMOSPHERE),
         ("analytic.md", ANALYTIC),
+        ("motor.md", MOTOR),
     ];
     for dir in [&first, &second] {
         let output = mjk(&["validate", "--out", &dir.to_string_lossy()]).expect("runs");
         assert!(output.status.success(), "{output:?}");
         let listing = String::from_utf8_lossy(&output.stdout);
-        assert_eq!(listing.lines().count(), 4, "{listing}");
+        assert_eq!(listing.lines().count(), 5, "{listing}");
         assert!(
             listing.lines().all(|line| line.starts_with("pass  ")),
             "{listing}"

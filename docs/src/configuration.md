@@ -201,17 +201,27 @@ Two checks cover the whole airframe:
 
 ### Motors, ESCs and the battery
 
-A motor is described by its electrical constants, or only by its time constant for airframes
-where only that is published. The models that use these arrive with
-[#19](https://github.com/MatthewK84/MJKPhysics/issues/19) and
+A motor is described by its electrical constants, or by a time constant and a top speed for
+airframes where only those are published. The [Motor and ESC](models/motor.md) page gives the
+models that use them; the battery's arrives with
 [#20](https://github.com/MatthewK84/MJKPhysics/issues/20).
+
+- **An electrical motor needs the inertia it turns:** the motor's `inertia`, its propeller's,
+  or both. A rotor whose electrical motor has neither is refused.
+- **Given both descriptions,** the electrical one is used.
+- **A rotor without an ESC gets an ideal one:** no latency, no slew limit, active braking, and
+  the motor's own `max_current`.
+- **The current limit** is the smaller of the motor's and the ESC's `max_current`.
+- **An ESC's latency is rounded** to the nearest whole physics step at the run's rate, halves
+  up.
 
 | Table | Field | Quantity | Rule |
 |---|---|---|---|
-| `[motors.<key>]` | `kv` | speed constant, such as `rpm/V` | `kv`, `resistance` and `no_load_current` together, or `time_constant`. All positive. |
+| `[motors.<key>]` | `kv` | speed constant, such as `rpm/V` | `kv`, `resistance` and `no_load_current` together, or `time_constant` and `max_speed` together, or both. All positive. |
 | | `resistance` | resistance | |
 | | `no_load_current` | current | |
 | | `time_constant` | time | |
+| | `max_speed` | angular rate, such as `rpm` | Speed at full duty: the time-constant tier's speed follows the duty cycle times this. |
 | | `max_current` | current | Positive. |
 | | `inertia` | moment of inertia | Rotor, about the spin axis. Positive. |
 | | `mass` | mass | Positive. |

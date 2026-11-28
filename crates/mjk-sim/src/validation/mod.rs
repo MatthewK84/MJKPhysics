@@ -5,5 +5,7 @@
 
 pub mod analytic;
 pub mod atmosphere;
+pub mod check;
 pub mod determinism;
 pub mod integrators;
+pub mod motor;

@@ -14,7 +14,8 @@ use serde::{Deserialize, Serialize};
 use super::parameter::{Parameter, Resolver};
 use super::rotors::{optional, positive};
 use super::units::quantities::{
-    CHARGE_C, CURRENT_A, INERTIA_KG_M2, MASS_KG, RATE_PER_S, RESISTANCE_OHM, SPEED_CONSTANT, TIME_S,
+    ANGULAR_RATE_RAD_S, CHARGE_C, CURRENT_A, INERTIA_KG_M2, MASS_KG, RATE_PER_S, RESISTANCE_OHM,
+    SPEED_CONSTANT, TIME_S,
 };
 
 /// A motor as written.
@@ -29,6 +30,8 @@ pub struct MotorConfig {
     pub no_load_current: Option<Parameter<f64>>,
     /// First-order time constant of its speed, for airframes where only that is published.
     pub time_constant: Option<Parameter<f64>>,
+    /// Speed at full duty, for the time-constant tier: speed follows duty times this.
+    pub max_speed: Option<Parameter<f64>>,
     /// Largest continuous current.
     pub max_current: Option<Parameter<f64>>,
     /// Moment of inertia of its rotor about the spin axis.
@@ -48,6 +51,8 @@ pub struct Motor {
     pub no_load_current_a: Option<f64>,
     /// Time constant, s.
     pub time_constant_s: Option<f64>,
+    /// Speed at full duty, for the time-constant tier, rad/s.
+    pub max_speed_rad_s: Option<f64>,
     /// Largest continuous current, A.
     pub max_current_a: Option<f64>,
     /// Rotor inertia, kg·m².
@@ -77,15 +82,28 @@ impl MotorConfig {
             let reason = "give kv, resistance and no_load_current together";
             return Err(resolver.error(path.clone(), reason));
         }
-        if !electrical.contains(&true) && self.time_constant.is_none() {
-            let reason = "give kv, resistance and no_load_current, or a time_constant";
+        if self.time_constant.is_some() != self.max_speed.is_some() {
+            let reason = "give time_constant and max_speed together";
             return Err(resolver.error(path.clone(), reason));
         }
-        self.values(resolver, path)
+        if !electrical.contains(&true) && self.time_constant.is_none() {
+            let reason = "give kv, resistance and no_load_current, or time_constant and max_speed";
+            return Err(resolver.error(path.clone(), reason));
+        }
+        let mut motor = self.values(resolver, path)?;
+        motor.max_speed_rad_s = optional(
+            resolver,
+            path,
+            "max_speed",
+            self.max_speed.as_ref(),
+            ANGULAR_RATE_RAD_S,
+        )?;
+        Ok(motor)
     }
 
     fn values(&self, resolver: &mut Resolver<'_>, path: &FieldPath) -> Result<Motor, EngineError> {
         Ok(Motor {
+            max_speed_rad_s: None,
             kv_rad_s_v: optional(resolver, path, "kv", self.kv.as_ref(), SPEED_CONSTANT)?,
             resistance_ohm: optional(
                 resolver,

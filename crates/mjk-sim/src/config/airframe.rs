@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 
 use super::body::{BodyDrag, Controller, ControllerConfig, DragConfig, Visual, VisualConfig};
 use super::document::{DocumentKind, parse_document};
+use super::drive::check_drive_trains;
 use super::mass::MassConfig;
 use super::parameter::{ConfigWarning, ParameterRecord, Resolver};
 use super::plausibility::check_rotors;
@@ -131,6 +132,7 @@ impl AirframeConfig {
         let mut resolver = Resolver::new(document, &self.sources);
         let airframe = self.airframe(&mut resolver)?;
         check_rotors(&resolver, &airframe)?;
+        check_drive_trains(&resolver, &airframe)?;
         self.warn_unused(&mut resolver);
         let (parameters, warnings) = resolver.finish();
         Ok(LoadedAirframe {

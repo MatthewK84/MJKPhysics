@@ -18,6 +18,7 @@
   - [Rigid-body dynamics](models/rigid-body.md)
   - [Integrators](models/integrators.md)
   - [Atmosphere and gravity](models/atmosphere.md)
+  - [Motor and ESC](models/motor.md)
 - [Validation](validation/README.md)
 - [Airframes](airframes/README.md)
   - [Example quadrotor](airframes/example-quadrotor.md)

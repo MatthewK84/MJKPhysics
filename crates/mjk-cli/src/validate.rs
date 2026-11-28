@@ -11,6 +11,7 @@ use mjk_sim::validation::analytic::{self, analytic_study};
 use mjk_sim::validation::atmosphere::{self, atmosphere_study};
 use mjk_sim::validation::determinism::{self, determinism_study};
 use mjk_sim::validation::integrators::{self, Method, integrator_study};
+use mjk_sim::validation::motor::{self, motor_study};
 
 use crate::args::Study;
 use crate::exit::{Exit, Failure};
@@ -53,6 +54,12 @@ fn table(study: Study) -> Result<Table, Failure> {
             .map(|checks| Table {
                 markdown: analytic::markdown(&checks),
                 passed: analytic::passed(&checks),
+            })
+            .map_err(|error| could_not_run(error.to_string())),
+        Study::Motor => motor_study()
+            .map(|checks| Table {
+                markdown: motor::markdown(&checks),
+                passed: motor::passed(&checks),
             })
             .map_err(|error| could_not_run(error.to_string())),
     }

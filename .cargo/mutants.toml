@@ -47,6 +47,10 @@ exclude_re = [
     # exactly the parallel tolerance, 1e-6, which no test can construct from normalized axes.
     # Which side of that boundary counts as tilted is a tolerance convention, as in mass.rs above.
     'plausibility\.rs:.*replace > with >= in tilted$',
+    # A motor speed's position-like part is the zero speed, which is the default.
+    'propulsion/system\.rs:.*replace <impl Coordinates for MotorSpeed>::positions -> Self with Default::default\(\)$',
+    # At rest, a net rate of exactly zero gives zero acceleration either way.
+    'propulsion/motor\.rs:.*replace < with <= in DcMotor::acceleration$',
 ]
 
 # Release-like timing is unnecessary; tests are fast, so a mutant that makes one loop forever
